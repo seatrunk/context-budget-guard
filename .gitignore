@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.env
+.env.*
+/config.yaml
+/auth.json
+*.log
+*.jsonl
+*-usage.json
+*-raw.json
+benchmark-fixtures/
+.benchmark-runs/
+.DS_Store

@@ -1,0 +1,6 @@
+# Repository owner reviews every change; sensitive automation ownership is explicit.
+* @seatrunk
+/.github/ @seatrunk
+/scripts/ @seatrunk
+/benchmarks/ @seatrunk
+/SKILL.md @seatrunk

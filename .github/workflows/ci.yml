@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-checks:
+    name: repository-checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Repository contracts and public-data hygiene
+        run: python3 scripts/check_repo.py
+      - name: Fixture and measurement tests (not runtime integration tests)
+        run: python3 -m unittest discover -s tests -v
+
+  pr-policy:
+    name: pr-policy
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require useful verification and a privacy acknowledgement
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+          event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+          pr = event['pull_request']
+          if pr['user']['login'] == 'dependabot[bot]' and pr['head']['ref'].startswith('dependabot/github_actions/'):
+              print('Dependency-only bot PR: CODEOWNER review and repository checks still apply.')
+              raise SystemExit(0)
+          body = pr.get('body') or ''
+          sections = ['Summary', 'Verification', 'Benchmark impact', 'Privacy and rollout']
+          for heading in sections:
+              match = re.search(r'^## ' + re.escape(heading) + r'\s*\n(.*?)(?=^## |\Z)', body, re.M | re.S)
+              if not match or not match.group(1).strip():
+                  raise SystemExit('Missing or empty required PR section: ' + heading)
+          acknowledgement = '- [x] I checked that this contribution contains no secrets or private transcripts.'
+          if acknowledgement.lower() not in body.lower():
+              raise SystemExit('Check the privacy acknowledgement after inspecting the diff.')
+          print('PR structure and privacy acknowledgement: OK; human review remains required.')
+          PY
