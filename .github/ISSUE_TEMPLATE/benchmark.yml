@@ -1,0 +1,36 @@
+name: Benchmark report
+description: Submit synthetic measurements or a reproducible benchmark proposal.
+title: "[benchmark] "
+labels: [needs-triage, benchmark]
+body:
+  - type: markdown
+    attributes:
+      value: "Use synthetic evidence only. Activation is blocked. Send sensitive reports through Security, not this form."
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: This report contains no secrets, private transcripts, profile contents, private paths, or session identifiers.
+          required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version and context
+      description: Repository revision and relevant runtime version, or not applicable. Do not include private identifiers.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal synthetic reproduction
+      description: Include mode, model/provider, units, repetitions, cache/session conditions, failure codes, and cost unknowns. Distinguish observed results from proposals.
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Measurement details and limitations
+      description: Separate observations from assumptions. Link only public, privacy-reviewed evidence.
+    validations:
+      required: true

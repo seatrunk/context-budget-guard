@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "recorded_on": "2026-11-02",
+  "guard_enabled": false,
+  "synthetic": true,
+  "scope": "installed-cli",
+  "samples_per_case": 1,
+  "model": "gpt-6.1-sol",
+  "provider": "openai-codex",
+  "prototype": {
+    "base_commit": "bf0203a794a07aac3ff764972ab9087baa4e4f4e",
+    "patch_sha256": "8cef70e609a26d9460a08e3d01f9349e4a3903f92a474189ffd7853f36987f30",
+    "review_status": "rejected",
+    "desktop_loaded_provenance_verified": false
+  },
+  "billing": {
+    "mode": "subscription_included",
+    "actual_cost_usd": null
+  },
+  "measurements": [
+    {
+      "case": "small",
+      "wall_seconds": 11.887317224000071,
+      "tool_content_utf8_bytes": 372,
+      "input_tokens": 38877,
+      "cache_read_tokens": 7680,
+      "output_tokens": 69,
+      "api_calls": 2,
+      "tool_calls": 1
+    },
+    {
+      "case": "over_lines",
+      "wall_seconds": 24.432428350999544,
+      "tool_content_utf8_bytes": 7394,
+      "input_tokens": 41631,
+      "cache_read_tokens": 23168,
+      "output_tokens": 71,
+      "api_calls": 2,
+      "tool_calls": 1
+    },
+    {
+      "case": "over_result",
+      "wall_seconds": 15.15679569599888,
+      "tool_content_utf8_bytes": 32162,
+      "input_tokens": 44301,
+      "cache_read_tokens": 43904,
+      "output_tokens": 90,
+      "api_calls": 2,
+      "tool_calls": 1
+    }
+  ],
+  "limitations": [
+    "One sample per distinct case; not a statistical latency comparison.",
+    "Guard-off observations only; no measured context or monetary savings.",
+    "End-to-end wall time includes CLI startup, inference and tools.",
+    "Input totals include reported cached input; cache behavior varied across cases.",
+    "Stored API tool-content UTF-8 bytes are not token estimates.",
+    "This records installed CLI sessions, not Desktop loaded-source enforcement.",
+    "Private transcripts, raw usage ledgers, host paths and session identifiers are intentionally omitted."
+  ]
+}
