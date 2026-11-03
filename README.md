@@ -14,14 +14,15 @@ mountain of tool output  -->  useful preview + recoverable artifact
 
 The goal is to bound tool output without dropping the diagnostic that explains what broke. A small error message matters more than another thousand lines of progress bars.
 
-That last part is still unfinished: short, necessary plugin/LSP notes can disappear from the model-visible result after aggregate spill, even when those notes fit. Until independent review clears the exact candidate, activation stays blocked. [Status and evidence](docs/project-status.md) explain the distinction between passing tests and approval.
+The November 3 protected-note candidate passes its primary aggregate-note regression, but independent review still rejected it: corrective multimodal output can exceed the byte ceiling, finalization loses a note-bearing read's approved receipt allowance, and literal wrapper delimiters remain unsanitized in notes. **Passing suites did not make this candidate ready.** Read the [cycle report](docs/reviews/2026-11-03-protected-notes.md) and [current status](docs/project-status.md).
 
 ## What you can use today
 
 - Follow the root [operating skill](SKILL.md) to review evidence and run repository checks.
 - Inspect the proposed [design and invariants](docs/design.md).
 - Generate synthetic fixtures and validate published data using the [benchmark guide](docs/benchmarking.md).
-- Help reproduce the missing-note bug with a tiny synthetic case. Read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+- Help reproduce the [open correctness gaps](docs/project-status.md) with tiny synthetic cases. Read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+- Review the proposed [multi-codebase evaluation protocol](docs/multi-codebase-evaluation.md): correctness first, smaller output second. It is not an implemented harness or a completed benchmark.
 
 You do not need to install dependencies to run the repository tooling. From the repository root with Python 3.11 or newer:
 
@@ -37,12 +38,16 @@ These commands check this repository; they do not enable a guard or run the sepa
 
 The [published baseline](benchmarks/results/2026-11-02-off-baseline.json) records actual synthetic CLI runs on November 2, 2026 with the guard **off**. There is one observation per case, no on-mode comparison, and no demonstrated savings. Actual USD cost is unknown; subscription inclusion is not a measured zero-dollar cost. See [measurement limits](docs/benchmarking.md) before comparing numbers.
 
+This cycle's separate native integration recorded 641 passing tests and one existing platform skip; a parent rerun passed 274 overlapping tests. Independent adversarial probes then exposed three blockers. These are **correctness results, not compression or cost benchmarks**, and public CI does not run the absent native implementation. The [sanitized review record](docs/reviews/2026-11-03-protected-notes.json) keeps those evidence sources separate.
+
 ## Project map
 
 | Read | For |
 | --- | --- |
 | [Project status](docs/project-status.md) | Blocker, prototype fingerprint, evidence boundaries |
 | [Benchmarking](docs/benchmarking.md) | Reproduction, metrics, reporting rules |
+| [Evaluation protocol](docs/multi-codebase-evaluation.md) | Proposed paired offline replay and later task-based evaluation |
+| [Latest cycle](docs/reviews/2026-11-03-protected-notes.md) | Rejected candidate, reproduced gaps, lessons learned |
 | [Rollout](docs/rollout.md) | Approval gates and rollback discipline |
 | [Repository governance](docs/repository-governance.md) | Desired review and branch protections |
 | [Security policy](SECURITY.md) | Private reporting and threat boundary |

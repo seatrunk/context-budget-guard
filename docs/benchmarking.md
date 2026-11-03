@@ -1,5 +1,11 @@
 # Benchmarking
 
+## Proposed next evaluation
+
+Use the [multi-codebase evaluation protocol](multi-codebase-evaluation.md) for paired offline replay before any separately approved task-based model experiment. It defines workload families, required semantic facts, hard correctness vetoes, recovery overhead and reproducibility metadata. It does **not** supply a replay harness or new results. The current fixture generator and provider-baseline validator are not implementations of that proposal.
+
+The [November 3 cycle report](reviews/2026-11-03-protected-notes.md) records correctness evidence and a rejecting independent review, not compression savings. Keep those failures visible when characterizing a rejected candidate in isolation; benchmarks cannot override the [rollout gates](rollout.md).
+
 ## Published off-only baseline
 
 [Raw public data](../benchmarks/results/2026-11-02-off-baseline.json) records actual synthetic CLI runs on November 2, 2026 using `gpt-6.1-sol` through `openai-codex`. Each case used a fresh session, one tool call, and two API calls. Each has **n=1**.

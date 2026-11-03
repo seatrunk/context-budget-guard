@@ -1,0 +1,98 @@
+{
+  "record_type": "isolated_correctness_review_summary",
+  "schema_version": 1,
+  "review_date": "2026-11-03",
+  "verdict": "REJECT",
+  "activation": "BLOCKED",
+  "runtime_included_in_this_repository": false,
+  "self_contained_reproduction_package": false,
+  "candidate": {
+    "base_commit": "bf0203a794a07aac3ff764972ab9087baa4e4f4e",
+    "index_tree": "eed6890e06d0eaee9c3b26dad17ed7b5f182a373",
+    "patch_sha256": "af23cfed60b6e85e88ed4e2f63ec89872c6fb598f63f2e9bde879bc9262ac2f6",
+    "predecessor_patch_sha256": "8cef70e609a26d9460a08e3d01f9349e4a3903f92a474189ffd7853f36987f30",
+    "staged_file_count": 21
+  },
+  "verification": {
+    "implementer": {
+      "required_files": 11,
+      "required_passed": 253,
+      "additional_contract_files": 1,
+      "additional_contract_passed": 21,
+      "adjacent_files": 5,
+      "adjacent_passed": 367,
+      "total_passed": 641,
+      "total_skipped": 1,
+      "staged_checks_passed": 12
+    },
+    "parent": {
+      "affected_files": 12,
+      "passed": 274,
+      "failed": 0,
+      "skipped": 1,
+      "all_manifest_entries_verified": 21
+    },
+    "reviewer": {
+      "permanent_contracts_passed": 21,
+      "retained_probe_cases": 8,
+      "retained_probe_passed": 3,
+      "retained_probe_failed": 5,
+      "blocking_failed_cases": 4,
+      "lifecycle_audit_failed_cases": 1
+    },
+    "sets_overlap_do_not_sum": true,
+    "skip_scope": "existing Windows-only test",
+    "public_ci_is_not_native_integration": true
+  },
+  "blockers": [
+    {
+      "id": "F1",
+      "severity": "P1",
+      "title": "Corrective compaction violates the hard rendered multimodal result ceiling",
+      "issue": 6,
+      "native_source_locations": [
+        "agent/context_budget_finalization.py:31-41",
+        "agent/context_budget_finalization.py:98-101"
+      ]
+    },
+    {
+      "id": "F2",
+      "severity": "P2",
+      "title": "Finalization revokes a successfully consumed receipt ceiling solely when a note is present",
+      "issue": 7,
+      "native_source_locations": [
+        "agent/context_budget_note_policy.py:97-103",
+        "agent/context_budget_notes.py:53-60"
+      ]
+    },
+    {
+      "id": "F3",
+      "severity": "P2",
+      "title": "Literal wrapper delimiters in the trusted note remain unsanitized",
+      "issue": 8,
+      "native_source_locations": [
+        "agent/context_budget_note_policy.py:14-17",
+        "agent/context_budget_note_policy.py:54-66"
+      ]
+    }
+  ],
+  "lifecycle_followup": {
+    "issue": 9,
+    "observed_delivered_control_rows": 10,
+    "observed_retained_ownership_entries": 10,
+    "additional_proven_readiness_blocker": false
+  },
+  "benchmark": {
+    "new_comparison_run": false,
+    "savings_measured": false,
+    "new_protocol_only": true,
+    "protocol_issue": 10,
+    "future_replay_issue": 11,
+    "historical_evidence": "off-only baseline; one observation per case"
+  },
+  "limitations": [
+    "Native patch, complete probe source, private logs and runtime are not published here.",
+    "Review summaries do not establish live-backend enforcement or production readiness.",
+    "No further native repair cycle, runtime commit, live application, profile change or restart followed rejection."
+  ]
+}
