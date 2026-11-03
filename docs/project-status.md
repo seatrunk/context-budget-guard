@@ -8,8 +8,8 @@ This repository contains operating guidance, specifications, and benchmark tooli
 
 The protected-note implementation preserves the primary short plugin/LSP note in its targeted aggregate-spill regression, but the exact candidate still fails the full acceptance contract. Independent review reproduced:
 
-- [#6: corrective multimodal byte overflow](https://github.com/seatrunk/context-budget-guard/issues/6): 17,108 measured bytes against the ordinary 16,384-byte ceiling.
-- [#7: receipt regression at finalization](https://github.com/seatrunk/context-budget-guard/issues/7): a note-bearing approved read loses its larger allowance after commit consumes the one-use receipt.
+- [#6: corrective multimodal byte overflow](https://github.com/seatrunk/context-budget-guard/issues/6): the intended corrective-fallback probe, with deliberately non-progressing aggregate enforcement and a feasible 200,000-character aggregate budget, returned 17,108 measured bytes against the ordinary 16,384-byte ceiling. The string control passed; see the [F1 reproduction scope](reviews/2026-11-03-protected-notes.md#f1--corrective-multimodal-compaction-exceeds-the-ceiling-p1).
+- [#7: unnecessary read re-limit at finalization](https://github.com/seatrunk/context-budget-guard/issues/7): finalization re-limits an already-approved note-bearing read after its one-use receipt was consumed. The approved output should survive; the receipt must not be retained or replayed.
 - [#8: literal delimiters in notes](https://github.com/seatrunk/context-budget-guard/issues/8): a queued literal closing tag remains unsanitized in string and multimodal results.
 
 [#9](https://github.com/seatrunk/context-budget-guard/issues/9) separately tracks the lifetime of already-delivered control-note ownership. It is an observed lifecycle concern, not an additional proven violation of the plan's deliberate pending-control choice.

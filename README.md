@@ -50,12 +50,12 @@ Mandatory controls and valid one-use read receipts retain their defined exceptio
 
 **We are between “review rejected” and “repair + re-review,” not between “tests passed” and “ship it.”**
 
-The latest cycle added protected note handling and passed its primary short plugin/LSP aggregate-spill reproduction. Its existing suites passed too. Fresh adversarial review still found:
+The latest cycle added protected note handling and passed its primary short plugin/LSP aggregate-spill reproduction. Its existing suites passed, but their permanent tests missed the three boundaries below. Fresh adversarial review reproduced:
 
 | Open gap | Why it matters | Track it |
 | --- | --- | --- |
-| Corrective multimodal output can exceed the byte ceiling | A fallback must obey the same final-rendering contract | [#6](https://github.com/seatrunk/context-budget-guard/issues/6) |
-| A note-bearing approved read loses its receipt ceiling at finalization | Commit and finalization must preserve one approved result without enabling receipt reuse | [#7](https://github.com/seatrunk/context-budget-guard/issues/7) |
+| Multimodal output can exceed the byte ceiling in the corrective fallback | Reproduced with deliberately non-progressing aggregate enforcement; see the [F1 probe scope and string control](docs/reviews/2026-11-03-protected-notes.md#f1--corrective-multimodal-compaction-exceeds-the-ceiling-p1) | [#6](https://github.com/seatrunk/context-budget-guard/issues/6) |
+| Finalization re-limits an already-approved note-bearing read after its one-use receipt was consumed | Preserve the approved output; do not retain or replay the receipt | [#7](https://github.com/seatrunk/context-budget-guard/issues/7) |
 | A literal wrapper delimiter in a queued note remains unsanitized | Test the note's own trust boundary, not just the tool body's | [#8](https://github.com/seatrunk/context-budget-guard/issues/8) |
 
 [#9](https://github.com/seatrunk/context-budget-guard/issues/9) separately tracks the lifetime of delivered control-note ownership. The original correctness issues remain open; these graphics do not close them.

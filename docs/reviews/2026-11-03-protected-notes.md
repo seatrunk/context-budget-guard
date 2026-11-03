@@ -42,15 +42,15 @@ The implementer's total is 641 passes across 17 files. Parent and reviewer rerun
 
 Separate-candidate path: `agent/context_budget_finalization.py`, corrective compaction and finalization.
 
-The fallback wraps the body with the full 16,384-byte allowance, then appends the note without remeasuring complete rendered bytes. A bounded 4,015-byte note, an image, exit code 7, and eight admitted status fields containing 255 escaped control characters each produced **17,108 measured bytes**. A deliberately non-progressing aggregate implementation exercises the intended corrective fallback; the aggregate budget itself is feasible. The string control passed.
+The fallback wraps the body with the full 16,384-byte allowance, then appends the note without remeasuring complete rendered bytes. A bounded 4,015-byte note, an image, exit code 7, and eight admitted status fields containing 255 escaped control characters each produced **17,108 measured bytes**. A deliberately non-progressing aggregate implementation exercises the intended corrective fallback under a feasible **200,000-character aggregate budget**. The string control passed. This probe targets corrective fallback, not the ordinary multimodal path.
 
 The permanent corrective test used ASCII status values and missed multimodal JSON-escaping overhead. Track the fix in [#6](https://github.com/seatrunk/context-budget-guard/issues/6). This also prevents closing the ceiling-related acceptance criteria in #1, #3, and #4.
 
-### F2 — Finalization loses an approved read ceiling (P2)
+### F2 — Finalization re-limits an already-approved note-bearing read (P2)
 
 Separate-candidate paths: `agent/context_budget_note_policy.py` and `agent/context_budget_notes.py`.
 
-A real sequential read with a **65,536-byte receipt** committed its complete synthetic 351-line output plus note at **21,448 characters**. Finalization under a nonbinding **200,000-character aggregate budget** replaced it with a **1,494-character archive notice**. The otherwise identical no-note control retained the complete body. The one-use receipt had already been consumed at commit, but note preparation re-limited the unchanged row.
+Finalization re-limits an already-approved note-bearing read after its one-use receipt was consumed. A real sequential read with a **65,536-byte receipt** committed its complete synthetic 351-line output plus note at **21,448 characters**. Finalization under a nonbinding **200,000-character aggregate budget** replaced it with a **1,494-character archive notice**. The otherwise identical no-note control retained the complete body. Note preparation unnecessarily re-limited the unchanged row; the requirement is to preserve the approved output, not to retain or replay the consumed receipt.
 
 The permanent receipt-with-note test exercised limiter consumption without finalization. Track the full-lifecycle regression and fix in [#7](https://github.com/seatrunk/context-budget-guard/issues/7).
 

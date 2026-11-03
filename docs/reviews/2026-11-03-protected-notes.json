@@ -49,6 +49,7 @@
       "id": "F1",
       "severity": "P1",
       "title": "Corrective compaction violates the hard rendered multimodal result ceiling",
+      "reproduction_scope": "Intended corrective fallback exercised with deliberately non-progressing aggregate enforcement and a feasible 200000-character aggregate budget; the string control passed. This is not the ordinary multimodal path.",
       "issue": 6,
       "native_source_locations": [
         "agent/context_budget_finalization.py:31-41",
@@ -58,7 +59,7 @@
     {
       "id": "F2",
       "severity": "P2",
-      "title": "Finalization revokes a successfully consumed receipt ceiling solely when a note is present",
+      "title": "Finalization re-limits an already-approved note-bearing read after its one-use receipt was consumed",
       "issue": 7,
       "native_source_locations": [
         "agent/context_budget_note_policy.py:97-103",
