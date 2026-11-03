@@ -1,30 +1,85 @@
-# context-budget-guard
+# Context Budget Guard
 
-### Less tool-output confetti. Keep the clues.
+![Less noise. Keep the clues. A tool-result stack preserves its failure diagnostic and a path to recover detail. Experimental operating skill and benchmark kit; runtime not shipped; activation blocked.](docs/assets/hero.svg)
 
 [![CI](https://github.com/seatrunk/context-budget-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/seatrunk/context-budget-guard/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-> **Experimental · activation BLOCKED.** This repository contains an operating skill, design notes, and benchmark tooling. It does **not** ship runtime enforcement or an installer. The separate local prototype is not included here and is not upstream Hermes.
+**[The idea](#the-idea) · [How it should work](#how-it-should-work) · [The plan](#the-plan) · [Evaluation](#how-we-plan-to-evaluate-it) · [Try the toolkit](#try-the-toolkit)**
 
-```text
-mountain of tool output  -->  useful preview + recoverable artifact
-                              ^ intended behavior, not a shipped guard
-```
+> **Experimental · activation BLOCKED.** This repository ships an operating skill, specifications and benchmark tools—not runtime enforcement or an installer. The separate local candidate was **REJECTED** by independent review. These graphics explain the intended design; they do not announce a working release or measured savings.
 
-The goal is to bound tool output without dropping the diagnostic that explains what broke. A small error message matters more than another thousand lines of progress bars.
+## The idea
 
-The November 3 protected-note candidate passes its primary aggregate-note regression, but independent review still rejected it: corrective multimodal output can exceed the byte ceiling, finalization loses a note-bearing read's approved receipt allowance, and literal wrapper delimiters remain unsanitized in notes. **Passing suites did not make this candidate ready.** Read the [cycle report](docs/reviews/2026-11-03-protected-notes.md) and [current status](docs/project-status.md).
+An agent can drown in tool output: a compiler dump, a long file, a giant JSON response. The important part may be just one exit code, one source location, or a short runtime notice.
 
-## What you can use today
+**The goal is not to delete more text. It is to keep the information the next decision needs—and make the rest recoverable.**
 
-- Follow the root [operating skill](SKILL.md) to review evidence and run repository checks.
-- Inspect the proposed [design and invariants](docs/design.md).
-- Generate synthetic fixtures and validate published data using the [benchmark guide](docs/benchmarking.md).
-- Help reproduce the [open correctness gaps](docs/project-status.md) with tiny synthetic cases. Read [CONTRIBUTING.md](CONTRIBUTING.md) first.
-- Review the proposed [multi-codebase evaluation protocol](docs/multi-codebase-evaluation.md): correctness first, smaller output second. It is not an implemented harness or a completed benchmark.
+| Keep in view | Keep recoverable | Never trade away |
+| --- | --- | --- |
+| Useful preview, failure status, necessary notices | Additional detail in a private/redacted artifact | Trust boundaries, valid media, mandatory controls, approved read semantics |
 
-You do not need to install dependencies to run the repository tooling. From the repository root with Python 3.11 or newer:
+The [operating skill](SKILL.md) describes how to review that behavior. The runtime would enforce it. **Loading a skill is not installing a guard.** Conversation-summary compaction is another layer, not a different name for this tool-output policy.
+
+## How it should work
+
+![Design target: tool data passes through per-result and aggregate budgeting into a model-visible preview. Additional detail goes to a private/redacted artifact. A trusted runtime notice remains exactly once outside the genuine untrusted wrapper, and targeted reads recover extra detail.](docs/assets/output-flow.svg)
+
+### One output, two destinations
+
+1. **For the model:** a useful bounded preview, original error/exit semantics, valid media and any necessary notice.
+2. **For recovery:** additional output in a private/redacted artifact, read with targeted `offset` / `limit` when the task actually needs it.
+3. **Across both:** track notice ownership by call ID, reserve its complete rendered footprint before spilling, and never restore an unbounded note after the final cap.
+
+A note sitting in a file is not the same as a note the model received. A small preview is not successful if it hides the reason a command failed.
+
+### The proposed defaults
+
+| Surface | Intended ordinary limit | Important boundary |
+| --- | --- | --- |
+| Complete file selection | 350 effective LF lines **and** 16,384 formatted UTF-8 bytes | Both limits apply; define empty/trailing-line behavior |
+| Partial file selection | 150 effective LF lines **and** 16,384 formatted UTF-8 bytes | Paginate instead of silently presenting an incomplete read as complete |
+| Final ordinary tool text | 16,384 UTF-8 bytes | Count the final representation, including framing and escaped metadata |
+| Inline notice bundles | Up to 4,096 bytes per bundle; 8,192 per batch | Active policy/tiny-budget decisions still apply; archive or use a bounded marker |
+
+Mandatory controls and valid one-use read receipts retain their defined exceptions. Aggregate turn accounting is separate from per-result bytes; irreducible-overhead reporting must not become a byte-limit escape hatch. None of these proposed limits is a total token, money, filesystem or same-UID security boundary. See the [full design](docs/design.md).
+
+## The plan
+
+![Six-stage promotion roadmap: define invariants is documented; the isolated build and review is rejected; repair and re-review is next; multi-code replay is proposed; real-task and compaction evaluation is not run; controlled rollout is locked. Offline characterization may expose failures earlier but cannot override a failing oracle.](docs/assets/roadmap.svg)
+
+**We are between “review rejected” and “repair + re-review,” not between “tests passed” and “ship it.”**
+
+The latest cycle added protected note handling and passed its primary short plugin/LSP aggregate-spill reproduction. Its existing suites passed too. Fresh adversarial review still found:
+
+| Open gap | Why it matters | Track it |
+| --- | --- | --- |
+| Corrective multimodal output can exceed the byte ceiling | A fallback must obey the same final-rendering contract | [#6](https://github.com/seatrunk/context-budget-guard/issues/6) |
+| A note-bearing approved read loses its receipt ceiling at finalization | Commit and finalization must preserve one approved result without enabling receipt reuse | [#7](https://github.com/seatrunk/context-budget-guard/issues/7) |
+| A literal wrapper delimiter in a queued note remains unsanitized | Test the note's own trust boundary, not just the tool body's | [#8](https://github.com/seatrunk/context-budget-guard/issues/8) |
+
+[#9](https://github.com/seatrunk/context-budget-guard/issues/9) separately tracks the lifetime of delivered control-note ownership. The original correctness issues remain open; these graphics do not close them.
+
+Read the [current status](docs/project-status.md), [cycle report](docs/reviews/2026-11-03-protected-notes.md), or [sanitized evidence JSON](docs/reviews/2026-11-03-protected-notes.json). The native patch and complete probe package are not distributed here, so public CI cannot reproduce or approve that absent runtime.
+
+## How we plan to evaluate it
+
+![Proposed evaluation: synthetic Python, TypeScript/JavaScript, Rust and SQL/config/log workloads enter paired unbudgeted, historical-spill and candidate-runtime arms. Independent correctness oracles veto broken results before bytes, recovery calls, latency or available token/cost data are compared. Protocol only; no benchmark scores are shown.](docs/assets/evaluation.svg)
+
+### Fidelity first. Efficiency second.
+
+- **Same workload, different arms:** freeze the inputs, call order, budgets and runtime fingerprints. Compare an unbudgeted reference, historical spilling and the actual isolated candidate—not a toy replacement.
+- **Check what survives:** diagnostic facts, note placement, failure status, media order, receipt lifetime, artifact recovery and no repeated tool execution.
+- **Then measure the whole cost:** output bytes, recovery/tool calls, timing, and actual provider/tokenizer usage when available. Count retries and follow-up reads; report unknown costs as unknown.
+- **Only later, with separate approval:** real coding tasks and tests, followed by deliberate conversation-compaction interaction experiments. A benchmark cannot authorize production activation.
+
+The [evaluation protocol](docs/multi-codebase-evaluation.md) is published; the replay harness and execution are **not implemented** by that document. [#11](https://github.com/seatrunk/context-budget-guard/issues/11) tracks the actual benchmark work.
+
+The historical [November 2 baseline](benchmarks/results/2026-11-02-off-baseline.json) remains **guard off, one observation per case**. There is no published on-mode comparison, measured savings, or verified live-backend enforcement. The [benchmark guide](docs/benchmarking.md) explains the evidence limits.
+
+## Try the toolkit
+
+Python 3.11+, no dependency installation, credentials or live profile required:
 
 ```sh
 python3 -m unittest discover -s tests -v
@@ -32,25 +87,25 @@ python3 scripts/check_repo.py
 python3 scripts/validate_benchmark.py benchmarks/results/2026-11-02-off-baseline.json
 ```
 
-These commands check this repository; they do not enable a guard or run the separate prototype's integration suite.
+These check the **public tooling**, not the separate runtime. To create synthetic fixtures, choose a new output directory:
 
-## Evidence, without the victory lap
+```sh
+python3 scripts/generate_fixtures.py --output benchmark-fixtures
+```
 
-The [published baseline](benchmarks/results/2026-11-02-off-baseline.json) records actual synthetic CLI runs on November 2, 2026 with the guard **off**. There is one observation per case, no on-mode comparison, and no demonstrated savings. Actual USD cost is unknown; subscription inclusion is not a measured zero-dollar cost. See [measurement limits](docs/benchmarking.md) before comparing numbers.
+The generator refuses existing paths. Generating fixtures does not run a model, recreate measured timing, or complete the proposed multi-codebase benchmark.
 
-This cycle's separate native integration recorded 641 passing tests and one existing platform skip; a parent rerun passed 274 overlapping tests. Independent adversarial probes then exposed three blockers. These are **correctness results, not compression or cost benchmarks**, and public CI does not run the absent native implementation. The [sanitized review record](docs/reviews/2026-11-03-protected-notes.json) keeps those evidence sources separate.
+## Go deeper
 
-## Project map
-
-| Read | For |
+| Start here | What you get |
 | --- | --- |
-| [Project status](docs/project-status.md) | Blocker, prototype fingerprint, evidence boundaries |
-| [Benchmarking](docs/benchmarking.md) | Reproduction, metrics, reporting rules |
-| [Evaluation protocol](docs/multi-codebase-evaluation.md) | Proposed paired offline replay and later task-based evaluation |
-| [Latest cycle](docs/reviews/2026-11-03-protected-notes.md) | Rejected candidate, reproduced gaps, lessons learned |
-| [Rollout](docs/rollout.md) | Approval gates and rollback discipline |
-| [Repository governance](docs/repository-governance.md) | Desired review and branch protections |
-| [Security policy](SECURITY.md) | Private reporting and threat boundary |
-| [Code of conduct](CODE_OF_CONDUCT.md) | Working together |
+| [Operating skill](SKILL.md) | Repeatable evidence and review procedure |
+| [Design](docs/design.md) | Invariants, exceptions and protected-note contract |
+| [Project status](docs/project-status.md) | Exact candidate fingerprint and remaining blockers |
+| [Latest cycle](docs/reviews/2026-11-03-protected-notes.md) | What passed, what failed and what we learned |
+| [Evaluation protocol](docs/multi-codebase-evaluation.md) | Proposed corpus, comparison arms, metrics and promotion gates |
+| [Rollout](docs/rollout.md) | Separate approval and rollback requirements |
+| [Governance](docs/repository-governance.md) | Required review and branch protections |
+| [Visual guide](docs/visual-guide.html) · [artwork sources](docs/assets/README.md) | Self-contained offline gallery and editable SVG/PNG graphics |
 
-Contributions are welcome, especially boring regression tests. Please keep private transcripts out of public issues. The project uses the [MIT license](LICENSE); existing copyright attribution remains unchanged.
+Contributions are welcome, especially small adversarial reproductions. Start with [CONTRIBUTING.md](CONTRIBUTING.md). Keep sensitive reports private under [SECURITY.md](SECURITY.md), follow the [code of conduct](CODE_OF_CONDUCT.md), and preserve the existing [MIT license](LICENSE) attribution.
