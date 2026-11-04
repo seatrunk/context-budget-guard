@@ -1,5 +1,5 @@
-"""Teste de propriedade (stdlib, semente fixa): sequências aleatórias de queue, settlement,
-falha de política, re-settlement, fim de lote e rotação de sessão. Invariantes N1–N5 e teto."""
+"""Property test (stdlib, fixed seed): random sequences of queue, settlement, policy failure,
+re-settlement, end of batch and session rotation. Invariants N1–N5 and the cap."""
 import os
 import random
 import sys
@@ -20,7 +20,7 @@ class NotesModel(unittest.TestCase):
         policy = Policy(result_cap=2048, note_cap=256, note_batch_cap=512, min_row_cap=256)
         for seq in range(N):
             ledger = NoteLedger("s0", retired_cap=16)
-            shown_in = {}  # note_id -> call_id onde ficou visível no último settlement
+            shown_in = {}  # note_id -> call_id where it was visible in the last settlement
             nid = 0
             for _ in range(rng.randint(1, 6)):
                 op = rng.random()
@@ -57,13 +57,13 @@ class NotesModel(unittest.TestCase):
                         shown_in[n] = row["call_id"]
                     for n in out.receipt["notes_shown"] + out.receipt["notes_marked"]:
                         self.assertNotEqual(ledger.get(n).state, NoteState.PENDING)
-                # N1: nenhuma nota aparece em duas linhas do mesmo lote
+                # N1: no note appears in two rows of the same batch
                 tags = [n for o in outs for n in o.receipt["notes_shown"]]
                 self.assertEqual(len(tags), len(set(tags)))
-                # nenhuma nota com dono no lote fica pendente (entregue ou marcada: nunca perdida)
+                # no note owned in the batch stays pending (delivered or marked: never lost)
                 for note in ledger.pending():
                     self.assertNotIn(note.owner_call_id, calls)
-            # N5: estado limitado a pendentes + histórico com teto
+            # N5: state bounded by pending + capped history
             self.assertLessEqual(ledger.state_size(), len(ledger.pending()) + 16)
 
 

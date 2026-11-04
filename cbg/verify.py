@@ -1,7 +1,7 @@
-"""Verificador independente do recibo. Lê só a saída final renderizada.
+"""Independent receipt verifier. Reads only the final rendered output.
 
-Não importa o limitador (budget.py) de propósito: só limits/render/sanitize/facts para ler o texto.
-Retorna a lista de violações; lista vazia = recibo válido.
+Deliberately does not import the limiter (budget.py): only limits/render/sanitize/facts to read text.
+Returns the list of violations; empty list = valid receipt.
 """
 import hashlib
 from typing import Iterable, List, Optional

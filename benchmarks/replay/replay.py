@@ -1,16 +1,16 @@
-"""Replay OFFLINE (sem modelo, sem rede) com três braços e oráculos de fidelidade (issue #11).
+"""OFFLINE replay (no model, no network) with three arms and fidelity oracles (issue #11).
 
-Braços sobre entradas idênticas:
-  none        sem orçamento: corpo inteiro + notas.
-  historical  spill histórico: preview só da cabeça por CARACTERES até o teto, nota descartada
-              quando a linha é spillada, e spill da maior linha quando o agregado estoura.
-  candidate   núcleo cbg (finalize_batch).
+Arms over identical inputs:
+  none        no budget: full body + notes.
+  historical  historical spill: head-only preview by CHARACTERS up to the cap, note dropped when
+              the row is spilled, and spill of the largest row when the aggregate overflows.
+  candidate   cbg core (finalize_batch).
 
-Oráculos por linha (independentes do núcleo; usam a verdade da fixture):
-  bytes<=teto, exit_code presente, local do erro presente, nota presente 1x fora do wrapper,
-  wrapper único, mídia preservada; e agregado<=turn_budget por caso.
+Per-row oracles (independent of the core; they use the fixture's ground truth):
+  bytes<=cap, exit_code present, error location present, note present once outside the wrapper,
+  single wrapper, media preserved; and aggregate<=turn_budget per case.
 
-Uso: python3 benchmarks/replay/replay.py [--out benchmarks/replay/results/offline-replay.json]
+Usage: python3 benchmarks/replay/replay.py [--out benchmarks/replay/results/offline-replay.json]
 """
 import argparse
 import hashlib
@@ -120,8 +120,8 @@ def main(argv=None):
         report["cases"].append(entry)
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(report, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
-    print("cbg offline replay: %d casos sintéticos, 0 chamadas de modelo, teto %d bytes" % (len(files), CAP))
-    print("%-11s %12s %10s  falhas" % ("braço", "bytes", "oráculos"))
+    print("cbg offline replay: %d synthetic cases, 0 model calls, cap %d bytes" % (len(files), CAP))
+    print("%-11s %12s %10s  failures" % ("arm", "bytes", "oracles"))
     for name, a in report["arms"].items():
         print("%-11s %12d %5d/%-4d  %s" % (name, a["bytes_total"], a["oracle_pass"], a["oracle_checks"],
                                           ", ".join(a["failures"]) or "-"))

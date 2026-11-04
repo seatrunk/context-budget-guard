@@ -54,7 +54,7 @@ class McpProxy(unittest.TestCase):
             self.assertEqual(len(out[10]["result"]["content"][0]["text"]), 50000 + len("\nsrc/lib.rs:12:5 error[E0308]"))
             receipts = Path(tmp, "receipts.jsonl").read_text()
             self.assertIn('"would_change": true', receipts)
-            self.assertNotIn("xxxxxxxx", receipts)  # recibo sem conteúdo
+            self.assertNotIn("xxxxxxxx", receipts)  # receipt without content
             self.assertFalse(Path(tmp, "artifacts").exists())
 
 

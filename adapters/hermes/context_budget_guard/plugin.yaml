@@ -1,6 +1,6 @@
 name: context-budget-guard
 version: "0.3.0"
-description: "Orçamento verificável para tool results (núcleo cbg). Default: shadow (só mede e grava recibos, não altera nada)."
+description: "Verifiable budget for tool results (cbg core). Default: shadow (only measures and writes receipts; changes nothing)."
 author: "seatrunk"
 provides_hooks:
   - transform_tool_result

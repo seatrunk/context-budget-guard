@@ -1,4 +1,4 @@
-"""Gera fixtures SINTÉTICAS e determinísticas para o replay offline (nenhum dado real)."""
+"""Generates SYNTHETIC, deterministic fixtures for the offline replay (no real data)."""
 import json
 import random
 from pathlib import Path

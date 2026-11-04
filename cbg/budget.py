@@ -1,7 +1,7 @@
-"""Limitador: decide o que entra na janela e emite o recibo. Sem I/O.
+"""Limiter: decides what enters the window and emits the receipt. No I/O.
 
-O artefato (original completo) é devolvido em ``Outcome.artifact`` para o adaptador gravar onde
-for privado; o núcleo só calcula sha256 e tamanho.
+The artifact (complete original) is returned in ``Outcome.artifact`` for the adapter to write
+somewhere private; the core only computes sha256 and size.
 """
 from dataclasses import dataclass, field
 import hashlib
@@ -24,12 +24,12 @@ class Policy:
     note_cap: int = 4096
     note_batch_cap: int = 8192
     max_locations: int = 5
-    min_row_cap: int = 1024  # piso do pass corretivo agregado
+    min_row_cap: int = 1024  # floor for the aggregate corrective pass
 
 
 @dataclass
 class Receipt:
-    """Recibo de leitura aprovada (#7): uso único, preso a call ID e sessão."""
+    """Approved-read receipt (#7): single use, bound to call ID and session."""
     call_id: str
     session_id: str
     max_bytes: int
@@ -39,7 +39,7 @@ class Receipt:
     def admits(self, call_id: str, session_id: str) -> bool:
         if self.call_id != call_id or self.session_id != session_id:
             return False
-        return self.consumed_by in (None, call_id)  # re-finalização da MESMA chamada não revoga
+        return self.consumed_by in (None, call_id)  # re-finalizing the SAME call does not revoke
 
 
 @dataclass
@@ -61,7 +61,7 @@ def _sha(text: str) -> str:
 
 
 def _prepare_notes(ledger: Optional[NoteLedger], call_id: str, policy: Policy):
-    """Notas elegíveis -> (textos visíveis, ids visíveis, ids só em marcador)."""
+    """Eligible notes -> (visible texts, visible ids, marker-only ids)."""
     if ledger is None:
         return [], [], []
     texts, shown, marked, used = [], [], [], 0
@@ -101,9 +101,9 @@ def apply_budget(call_id: str, result: Any, *, policy: Policy = Policy(), ledger
                  receipt: Optional[Receipt] = None, session_id: Optional[str] = None,
                  cap_override: Optional[int] = None, force: Optional[str] = None,
                  control: bool = False) -> Outcome:
-    """Aplica o orçamento a um tool result.
+    """Applies the budget to a tool result.
 
-    ``force``: "withheld" (falha de política/agregado: corpo retido, notas mantidas) ou None.
+    ``force``: "withheld" (policy/aggregate failure: body withheld, notes kept) or None.
     """
     raw_body, media, kind = split_result(result)
     code = _facts.exit_code_of(result, exit_code)
@@ -127,7 +127,7 @@ def apply_budget(call_id: str, result: Any, *, policy: Policy = Policy(), ledger
     if control:
         cap, line_limit = None, None
 
-    # Exit code vindo de metadado entra sempre como fato visível.
+    # An exit code from metadata always enters as a visible fact.
     fact_line = "" if code is None or _facts.mentions_exit_code(body, code) else "[cbg] exit_code=%d\n" % code
 
     def fits(r: Rendered) -> bool:
@@ -154,7 +154,7 @@ def apply_budget(call_id: str, result: Any, *, policy: Policy = Policy(), ledger
                 if excess <= 0:
                     mode, rendered = "preview", candidate
                     break
-                budget -= excess  # remede tudo depois de cada corte (escaping JSON incluído)
+                budget -= excess  # re-measure everything after each cut (JSON escaping included)
     if rendered is None:
         mode = "withheld" if force == "withheld" else "marker"
         header = _header(mode, raw_body, code, locs, art_sha)
@@ -206,14 +206,14 @@ def _failclosed(cap: Optional[int], kind: str) -> Rendered:
 def finalize_batch(rows: List[Dict[str, Any]], *, ledger: Optional[NoteLedger] = None, policy: Policy = Policy(),
                    turn_budget: Optional[int] = None, policy_available: bool = True,
                    aggregate: Optional[Callable[[List[Outcome]], None]] = None) -> List[Outcome]:
-    """Settlement de um lote. rows: dicts com call_id, result e opcionais exit_code, read_kind,
+    """Settlement of a batch. rows: dicts with call_id, result and optional exit_code, read_kind,
     receipt, control.
 
-    - settlement 1: orçamento por resultado;
-    - pass corretivo agregado único (se turn_budget): reduz as maiores linhas não-control;
-    - falha de política/agregado (exceção ou policy_available=False): toda linha vira withheld com
-      notas mantidas (#4, B2, B3), nunca reexecuta ferramenta;
-    - complete_batch só no fim: a nota só se aposenta depois do último settlement (B3).
+    - settlement 1: per-result budget;
+    - single aggregate corrective pass (if turn_budget): shrinks the largest non-control rows;
+    - policy/aggregate failure (exception or policy_available=False): every row becomes withheld with
+      notes kept (#4, B2, B3); never re-executes a tool;
+    - complete_batch only at the end: a note retires only after the last settlement (B3).
     """
     def run(row, **kw):
         return apply_budget(row["call_id"], row["result"], policy=policy, ledger=ledger,
@@ -235,7 +235,7 @@ def finalize_batch(rows: List[Dict[str, Any]], *, ledger: Optional[NoteLedger] =
                     outs[i] = run(rows[i], cap_override=share)
         if aggregate is not None:
             aggregate(outs)
-    except Exception as exc:  # fail closed: corpo retido, nota mantida
+    except Exception as exc:  # fail closed: body withheld, note kept
         outs = [run(r, force="withheld") for r in rows]
         for o in outs:
             o.receipt["policy_error"] = type(exc).__name__

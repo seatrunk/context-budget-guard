@@ -1,17 +1,17 @@
-"""Adaptador Hermes Agent do context-budget-guard (hook ``transform_tool_result``).
+"""Hermes Agent adapter for context-budget-guard (``transform_tool_result`` hook).
 
-Fino de propósito: lê config do ambiente, chama o núcleo ``cbg`` e grava recibos JSONL.
+Thin on purpose: reads config from the environment, calls the ``cbg`` core and writes JSONL receipts.
 
-Variáveis:
+Variables:
   CBG_MODE           off | shadow (default) | enforce
-  CBG_LOG_DIR        default: $HERMES_HOME/context-budget-guard  (recibos em receipts.jsonl)
-  CBG_RESULT_CAP     default 16384 (bytes UTF-8 do texto final)
-  CBG_FRAMING_RESERVE default 512 (bytes reservados ao wrapper que o próprio Hermes aplica)
+  CBG_LOG_DIR        default: $HERMES_HOME/context-budget-guard  (receipts in receipts.jsonl)
+  CBG_RESULT_CAP     default 16384 (UTF-8 bytes of the final text)
+  CBG_FRAMING_RESERVE default 512 (bytes reserved for the wrapper Hermes applies itself)
 
-Em shadow o hook devolve None (Hermes mantém o resultado original) e só registra o que faria.
-Recibos não contêm conteúdo do tool result: só tamanhos, hashes, modo e fatos (exit code, locais).
-Em enforce o original vai para artifacts/<sha256>.txt (0600) e o modelo recebe o preview.
-Qualquer exceção interna é fail-open para o resultado original e registrada como erro.
+In shadow the hook returns None (Hermes keeps the original result) and only records what it would do.
+Receipts hold no tool-result content: only sizes, hashes, mode and facts (exit code, locations).
+In enforce the original goes to artifacts/<sha256>.txt (0600) and the model receives the preview.
+Any internal exception is fail-open to the original result and is recorded as an error.
 """
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 _HERE = Path(__file__).resolve().parent
-if str(_HERE / "vendor") not in sys.path:  # install.sh copia o núcleo para vendor/cbg
+if str(_HERE / "vendor") not in sys.path:  # install.sh copies the core to vendor/cbg
     sys.path.insert(0, str(_HERE / "vendor"))
 
 import cbg  # noqa: E402
@@ -68,7 +68,7 @@ def _exit_code(result: str) -> Optional[int]:
 
 
 def _inner(rendered_text: str) -> str:
-    """Hermes aplica o próprio wrapper; devolvemos só o corpo (sem o nosso framing)."""
+    """Hermes applies its own wrapper; we return only the body (without our framing)."""
     body = rendered_text
     if body.startswith(OPEN + "\n"):
         body = body[len(OPEN) + 1:]
@@ -102,8 +102,8 @@ def _on_transform_tool_result(tool_name: str = "", args: Any = None, result: Any
                               tool_call_id: str = "", session_id: str = "", **_: Any) -> Optional[str]:
     try:
         return process(tool_name, result, tool_call_id, session_id)
-    except Exception as exc:  # fail-open: nunca derruba a chamada
-        log.warning("context-budget-guard: erro interno (%s); resultado original mantido", type(exc).__name__)
+    except Exception as exc:  # fail-open: never breaks the call
+        log.warning("context-budget-guard: internal error (%s); original result kept", type(exc).__name__)
         try:
             _write(_log_dir() / "errors.jsonl", json.dumps({"tool": tool_name, "error": type(exc).__name__}) + "\n")
         except OSError:

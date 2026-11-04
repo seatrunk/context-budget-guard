@@ -25,11 +25,11 @@ jobs:
           persist-credentials: false
       - name: Repository contracts and public-data hygiene
         run: python3 scripts/check_repo.py
-      - name: Lint mínimo (compileall)
+      - name: Minimal lint (compileall)
         run: python3 -m compileall -q cbg adapters benchmarks scripts tests
-      - name: Núcleo, adaptadores, invariantes e tooling
+      - name: Core, adapters, invariants and tooling
         run: python3 -m unittest discover -s tests -v
-      - name: Replay offline (sem modelo, sem rede)
+      - name: Offline replay (no model, no network)
         run: |
           python3 benchmarks/replay/replay.py --out "$RUNNER_TEMP/offline-replay.json"
           cmp "$RUNNER_TEMP/offline-replay.json" benchmarks/replay/results/offline-replay.json
@@ -43,7 +43,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Gitleaks 8.30.1 (binário oficial, SHA-256 fixo) no histórico inteiro
+      - name: Gitleaks 8.30.1 (official binary, pinned SHA-256) over the full history
         env:
           GITLEAKS_VERSION: 8.30.1
           GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: zizmor 1.32.0 (PyPI, --require-hashes) nos workflows
+      - name: zizmor 1.32.0 (PyPI, --require-hashes) on workflows
         run: |
           set -eu
           python3 -m venv "$RUNNER_TEMP/zizmor"
