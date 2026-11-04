@@ -1,4 +1,4 @@
-"""Testes permanentes do harness de replay offline (#11)."""
+"""Permanent tests for the offline replay harness (#11)."""
 import json
 import sys
 import tempfile

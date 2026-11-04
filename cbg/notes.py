@@ -1,15 +1,15 @@
-"""Ownership de notas (plugin/LSP) por call ID: máquina de estados explícita.
+"""Note (plugin/LSP) ownership by call ID: an explicit state machine.
 
-Estados: PENDING -> DELIVERED -> RETIRED.  Modelo em docs/model/notes.md.
+States: PENDING -> DELIVERED -> RETIRED.  Model in docs/model/notes.md.
 
-Invariantes (testadas em tests/invariants/test_notes_model.py):
-  N1 uma nota é entregue a exatamente um call ID e aparece em exatamente uma linha renderizada.
-  N2 o dono aponta para o sha256 do que foi de fato renderizado (B2); rebind só no mesmo call ID.
-  N3 re-settlement do mesmo call ID (pass corretivo, falha de política) continua recebendo a nota
-     já entregue (B3); só complete_batch/rotate_session aposentam.
-  N4 rotação de sessão não exclui nota PENDING da elegibilidade do dono (B1) e aposenta só DELIVERED.
-  N5 estado limitado (#9): DELIVERED vira RETIRED no fim do lote e sai do ledger; resta um histórico
-     de aposentadas com teto fixo, usado só para não perder nota num re-settlement tardio.
+Invariants (tested in tests/invariants/test_notes_model.py):
+  N1 a note is delivered to exactly one call ID and appears in exactly one rendered row.
+  N2 the owner points to the sha256 of what was actually rendered (B2); rebind only on the same call ID.
+  N3 a re-settlement of the same call ID (corrective pass, policy failure) keeps receiving the
+     already delivered note (B3); only complete_batch/rotate_session retire.
+  N4 session rotation does not remove a PENDING note from its owner's eligibility (B1) and retires only DELIVERED.
+  N5 bounded state (#9): DELIVERED becomes RETIRED at the end of the batch and leaves the ledger; a
+     fixed-cap history of retired notes remains, used only so a late re-settlement does not lose a note.
 """
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -47,26 +47,26 @@ class NoteLedger:
     # -- eventos -----------------------------------------------------------------------------
     def queue(self, note_id: str, owner_call_id: str, text: str) -> Note:
         if note_id in self._live or note_id in self._retired:
-            raise OwnershipError("note_id duplicado: " + note_id)
+            raise OwnershipError("duplicate note_id: " + note_id)
         note = Note(note_id, owner_call_id, text, self.session_id)
         self._live[note_id] = note
         return note
 
     def eligible(self, call_id: str) -> List[Note]:
-        """Notas que pertencem à linha ``call_id``: pendentes, já entregues a ela, ou aposentadas
-        dela (re-settlement tardio). Independe da sessão em que foram enfileiradas (B1)."""
+        """Notes that belong to row ``call_id``: pending, already delivered to it, or retired from it
+        (late re-settlement). Independent of the session in which they were queued (B1)."""
         live = [n for n in self._live.values() if n.owner_call_id == call_id]
         late = [n for n in self._retired.values() if n.owner_call_id == call_id]
         return live + late
 
     def bind(self, call_id: str, note_ids: Iterable[str], rendered_sha256: str) -> None:
-        """Registra que ``note_ids`` estão no render final ``rendered_sha256`` da linha ``call_id``."""
+        """Records that ``note_ids`` are in the final render ``rendered_sha256`` of row ``call_id``."""
         for nid in note_ids:
             note = self._live.get(nid) or self._retired.get(nid)
             if note is None:
-                raise OwnershipError("nota desconhecida: " + nid)
+                raise OwnershipError("unknown note: " + nid)
             if note.owner_call_id != call_id:
-                raise OwnershipError("nota %s pertence a %s, não a %s" % (nid, note.owner_call_id, call_id))
+                raise OwnershipError("note %s belongs to %s, not to %s" % (nid, note.owner_call_id, call_id))
             if note.state is NoteState.PENDING:
                 note.state = NoteState.DELIVERED
             note.rendered_sha256 = rendered_sha256

@@ -1,6 +1,6 @@
-"""context-budget-guard: núcleo puro (sem I/O) de orçamento para tool results.
+"""context-budget-guard: pure (no I/O) budgeting core for tool results.
 
-API pública estável desta etapa:
+Stable public API for this stage:
     Policy, Note, Receipt, Rendered, NoteLedger, apply_budget, finalize_batch, verify
 """
 from .limits import effective_lines, utf8_bytes, utf8_truncate

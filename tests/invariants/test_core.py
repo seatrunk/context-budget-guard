@@ -1,4 +1,4 @@
-"""Invariantes do núcleo cbg: B1–B3 (PR #13) e issues #1, #3–#9 que pertencem ao núcleo."""
+"""cbg core invariants: B1–B3 (PR #13) and the core parts of issues #1, #3–#9."""
 import json
 import sys
 import unittest
@@ -57,7 +57,7 @@ class PR13Blockers(unittest.TestCase):
         ledger = NoteLedger("s1")
         ledger.queue("n-old", "read-1", "lsp: " + "x" * 3800)
         receipt = Receipt("read-1", "s1", max_bytes=65536)
-        ledger.rotate_session("s2")  # rotação: recibo da sessão antiga não vale mais
+        ledger.rotate_session("s2")  # rotation: the old session's receipt is no longer valid
         read = "".join("line %05d %s\n" % (i, "y" * 50) for i in range(351))
         out = finalize_batch([{"call_id": "read-1", "result": read, "read_kind": "full", "receipt": receipt}],
                              ledger=ledger)[0]
@@ -94,7 +94,7 @@ class PR13Blockers(unittest.TestCase):
         self.assertEqual([o.mode for o in outs], ["withheld", "withheld"])
         self.assertEqual(tag_count(outs[0], "n1"), 1)
         self.assertEqual(tag_count(outs[1], "n1"), 0)
-        # re-settlement tardio do mesmo call ID depois de aposentada: nota não some
+        # late re-settlement of the same call ID after retirement: the note does not vanish
         late = finalize_batch([rows[0]], ledger=ledger, policy_available=False)[0]
         self.assertEqual(tag_count(late, "n1"), 1)
 
@@ -167,9 +167,9 @@ class Issues(unittest.TestCase):
             self.assertEqual(out.mode, "full", with_note)
             self.assertIn(read.splitlines()[-1], out.rendered.model_text())
             again = apply_budget("r1", read, read_kind="full", receipt=receipt, ledger=ledger)
-            self.assertEqual(again.mode, "full")  # re-finalização da mesma chamada
+            self.assertEqual(again.mode, "full")  # re-finalizing the same call
         other = apply_budget("r2", read, read_kind="full", receipt=receipt, session_id="s1")
-        self.assertEqual(other.mode, "preview")  # outra chamada não reaproveita
+        self.assertEqual(other.mode, "preview")  # another call cannot reuse it
         expired = Receipt("r3", "s0", max_bytes=65536)
         self.assertEqual(apply_budget("r3", read, read_kind="full", receipt=expired, session_id="s1").mode, "preview")
 
@@ -195,12 +195,12 @@ class Issues(unittest.TestCase):
             ledger.queue("n%d" % i, "ctl-%d" % i, "control note")
             out = finalize_batch([{"call_id": "ctl-%d" % i, "result": "c" * 30000, "control": True}],
                                  ledger=ledger)[0]
-            self.assertEqual(out.mode, "control")  # isenção de controle obrigatório mantida
+            self.assertEqual(out.mode, "control")  # mandatory-control exemption kept
         self.assertEqual(ledger.pending(), [])
         self.assertLessEqual(ledger.state_size(), 8)
         ledger.queue("p", "seg-2", "pending")
         ledger.rotate_session("s2")
-        self.assertEqual([n.note_id for n in ledger.pending()], ["p"])  # nunca limpa nota não entregue
+        self.assertEqual([n.note_id for n in ledger.pending()], ["p"])  # never clears an undelivered note
 
     def test_P1_structured_dict_result(self):
         out = apply_budget("c", {"exit_code": 3, "data": ["é" * 9000]})
@@ -216,7 +216,7 @@ class Issues(unittest.TestCase):
 
 
 class VerifierIsIndependent(unittest.TestCase):
-    """O verificador reprova a implementação ingênua (corta e depois anexa a nota)."""
+    """The verifier rejects the naive implementation (cut, then append the note)."""
 
     def naive(self, body, note):
         return render(utf8_truncate(body, CAP - 60), "text", [note_tag("n1") + " " + note])

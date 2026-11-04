@@ -1,20 +1,20 @@
-"""Renderização canônica e medição dos bytes finais que o modelo vê.
+"""Canonical rendering and measurement of the final bytes the model sees.
 
-Uma única função gera o que é entregue e o que é medido: não existe "estimativa".
+A single function produces what is delivered and what is measured: there is no "estimate".
 
-Formas de resultado aceitas:
-- ``str``: texto de ferramenta.
+Accepted result shapes:
+- ``str``: tool text.
 - ``dict`` multimodal: ``{"_multimodal": True, "content": [parts...], "text_summary": ...}``
-  com parts ``{"type": "text", "text": ...}`` ou mídia (``image_url``, ``image``, ...).
+  with parts ``{"type": "text", "text": ...}`` or media (``image_url``, ``image``, ...).
 
-Formato renderizado:
-- texto: ``<untrusted_tool_result>\\n{body}\\n</untrusted_tool_result>`` + sufixo de notas.
-- multimodal: lista JSON de parts; o texto do corpo vai embrulhado na primeira part de texto,
-  mídia mantém a ordem, e as notas viram a ÚLTIMA part de texto, fora do wrapper (issue #3).
+Rendered format:
+- text: ``<untrusted_tool_result>\\n{body}\\n</untrusted_tool_result>`` + note suffix.
+- multimodal: a JSON list of parts; the body text is wrapped in the first text part,
+  media keeps its order, and notes become the LAST text part, outside the wrapper (issue #3).
 
-Medida: texto -> bytes UTF-8; multimodal -> bytes UTF-8 de ``json.dumps(parts)`` (escaping JSON
-real, inclusive de controles), com o payload de mídia contado por um marcador fixo, porque mídia
-não é texto de contexto e é preservada como está (decisão registrada no README).
+Measure: text -> UTF-8 bytes; multimodal -> UTF-8 bytes of ``json.dumps(parts)`` (real JSON
+escaping, including control characters), with the media payload counted as a fixed marker, because
+media is not context text and is preserved as-is (decision recorded in the README).
 """
 from dataclasses import dataclass, field
 import json
@@ -29,11 +29,11 @@ NOTE_HEADER = "[cbg notes]"
 @dataclass(frozen=True)
 class Rendered:
     kind: str  # "text" | "multimodal"
-    payload: Any  # str ou list[dict]
+    payload: Any  # str or list[dict]
     media: List[dict] = field(default_factory=list)
 
     def model_text(self) -> str:
-        """Texto canônico usado para medir e verificar."""
+        """Canonical text used for measuring and verifying."""
         if self.kind == "text":
             return self.payload
         return json.dumps(_measurable(self.payload), ensure_ascii=False, separators=(",", ":"))
@@ -44,7 +44,7 @@ def is_multimodal(result: Any) -> bool:
 
 
 def split_result(result: Any):
-    """Retorna (texto_do_corpo, partes_de_mídia_em_ordem, kind)."""
+    """Returns (body_text, media_parts_in_order, kind)."""
     if is_multimodal(result):
         texts, media = [], []
         for part in result.get("content") or []:
@@ -57,7 +57,7 @@ def split_result(result: Any):
         return "\n".join(texts), media, "multimodal"
     if isinstance(result, str):
         return result, [], "text"
-    # dict/list estruturado não multimodal (probe P1): serialização determinística, sem .encode em hash.
+    # structured non-multimodal dict/list (probe P1): deterministic serialization, no .encode on a hash.
     return json.dumps(result, ensure_ascii=False, sort_keys=True, default=str), [], "text"
 
 
@@ -96,5 +96,5 @@ def rendered_bytes(rendered: Rendered) -> int:
 
 
 def overhead_bytes(kind: str, note_texts: List[str], media: List[dict]) -> int:
-    """Bytes do render com corpo vazio: framing + escaping + sufixo + mídia."""
+    """Bytes of the render with an empty body: framing + escaping + suffix + media."""
     return rendered_bytes(render("", kind, note_texts, media))

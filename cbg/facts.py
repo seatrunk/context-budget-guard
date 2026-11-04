@@ -1,4 +1,4 @@
-"""Fatos obrigatórios que sobrevivem a qualquer corte: exit code e local do erro."""
+"""Mandatory facts that survive any cut: exit code and error location."""
 import re
 from typing import Any, List, Optional
 
@@ -7,7 +7,7 @@ _EXT = r"(?:py|pyi|ts|tsx|js|jsx|mjs|cjs|rs|go|c|cc|cpp|h|hpp|java|kt|rb|php|sql
 # path:line[:col] (gcc/rustc/tsc/eslint/pytest), File "x.py", line N (traceback), x.ts(12,5) (tsc)
 _LOC = [
     re.compile(r"File \"([^\"\n]+\." + _EXT + r")\", line (\d+)"),
-    # lookbehind ancora no início do token: evita backtracking quadrático em runs longos.
+    # the lookbehind anchors at the start of a token: avoids quadratic backtracking on long runs.
     re.compile(r"(?<![\w./\-])([\w./\-]+\." + _EXT + r")\((\d+),(\d+)\)"),
     re.compile(r"(?<![\w./\-])([\w./\-]+\." + _EXT + r"):(\d+)(?::(\d+))?"),
 ]
@@ -24,8 +24,8 @@ def exit_code_of(result: Any, explicit: Optional[int] = None) -> Optional[int]:
 
 
 def error_locations(text: str, limit: int = 5) -> List[str]:
-    """Locais únicos ``arquivo:linha`` em ordem de aparição; quando há mais que ``limit``,
-    fica com os últimos (em traceback o frame relevante é o último)."""
+    """Unique ``file:line`` locations in order of appearance; when there are more than ``limit``,
+    keeps the last ones (in a traceback the relevant frame is the last)."""
     found = []
     for pattern in _LOC:
         for m in pattern.finditer(text):

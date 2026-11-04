@@ -1,11 +1,11 @@
-"""Proxy MCP stdio com orçamento em tool results. Só stdlib.
+"""MCP stdio proxy that budgets tool results. Stdlib only.
 
     python3 adapters/mcp_proxy/proxy.py [--mode shadow|enforce|off] [--log-dir DIR] [--cap N] -- CMD [ARGS...]
 
-Fica entre o cliente MCP (stdin/stdout deste processo) e o servidor real (CMD, filho). Repassa
-toda mensagem JSON-RPC sem alterar, exceto respostas a ``tools/call``: o ``result.content`` passa
-pelo núcleo ``cbg``. Default ``shadow``: só grava recibos em DIR/receipts.jsonl (sem conteúdo).
-Em ``enforce`` o original vai para DIR/artifacts/<sha256>.txt (0600).
+Sits between the MCP client (this process's stdin/stdout) and the real server (CMD, a child).
+Forwards every JSON-RPC message unchanged, except responses to ``tools/call``: ``result.content``
+goes through the ``cbg`` core. Default ``shadow``: only writes receipts to DIR/receipts.jsonl (no
+content). In ``enforce`` the original goes to DIR/artifacts/<sha256>.txt (0600).
 """
 import argparse
 import json
@@ -23,7 +23,7 @@ import cbg  # noqa: E402
 class Proxy:
     def __init__(self, mode: str, log_dir: Path, cap: int):
         self.mode, self.log_dir, self.policy = mode, log_dir, cbg.Policy(result_cap=cap)
-        self.pending = {}  # id JSON-RPC -> nome da ferramenta
+        self.pending = {}  # JSON-RPC id -> tool name
         self.lock = threading.Lock()
 
     def _write(self, rel: str, text: str) -> None:
@@ -74,7 +74,7 @@ class Proxy:
         r = out.rendered
         new_content = [{"type": "text", "text": r.payload}] if r.kind == "text" else r.payload
         new_result = dict(result, content=new_content)
-        if "structuredContent" in new_result:  # contornaria o orçamento
+        if "structuredContent" in new_result:  # would bypass the budget
             new_result.pop("structuredContent")
             rec_note = {"call_id": call_id, "structured_content_dropped": True}
             self._write("receipts.jsonl", json.dumps(rec_note) + "\n")
@@ -86,7 +86,7 @@ def _pump(src, dst, fn):
         line = raw.decode("utf-8", errors="replace")
         try:
             line = fn(line)
-        except Exception:  # fail-open para a mensagem original
+        except Exception:  # fail-open to the original message
             pass
         dst.write(line.encode("utf-8") if line.endswith("\n") else (line + "\n").encode("utf-8"))
         dst.flush()
@@ -96,7 +96,7 @@ def _pump_and_close(src, dst, fn):
     try:
         _pump(src, dst, fn)
     finally:
-        dst.close()  # EOF do cliente vira EOF do servidor
+        dst.close()  # client EOF becomes server EOF
 
 
 def main(argv=None) -> int:
@@ -108,7 +108,7 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
     cmd = args.command[1:] if args.command[:1] == ["--"] else args.command
     if not cmd:
-        ap.error("informe o servidor MCP real depois de --")
+        ap.error("pass the real MCP server command after --")
     proxy = Proxy(args.mode, Path(args.log_dir).expanduser(), args.cap)
     child = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     up = threading.Thread(target=_pump_and_close, args=(sys.stdin.buffer, child.stdin, proxy.from_client), daemon=True)
