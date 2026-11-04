@@ -5,7 +5,7 @@ Production activation is currently **BLOCKED**. Since PR #14 this repository shi
 Before any `enforce` trial or native runtime trial:
 
 - Run the real-task benchmark from the README: shadow receipts first, then paired A/B enforce runs, with no fidelity-oracle regressions.
-- Pass the Etapa 2 native combined gate on the exact native candidate, then independent review. Etapa 1 core tests and the offline replay (candidate 39/39) do not replace it.
+- Pass the Stage 2 native combined gate on the exact native candidate, then independent review. Stage 1 core tests and the offline replay (candidate 39/39) do not replace it.
 
 - Resolve the missing short plugin/LSP note after aggregate spill. Add a synthetic regression and inspect model-visible output.
 - Resolve the latest [combined assessment blockers](reviews/2026-11-04-combined-assessment.md): rotated-session re-budgeting, exact ownership of withheld notice presentations, and repeated settlement while dependencies remain failed. Individual #6–#9 approvals do not establish compatibility.
@@ -19,4 +19,4 @@ Stop if necessary notes disappear, artifacts expose private content, media/contr
 
 Offline, no-provider replay in an approved isolated checkout may characterize a rejected candidate's failures. It is not a live trial or readiness approval. Task-based model experiments, conversation-compaction interactions, paid usage, and any production canary require separate scope and authorization. See the proposed [evaluation protocol](multi-codebase-evaluation.md).
 
-Do not restart services, enable profiles, or claim deployment from this checklist. See [project status](project-status.md) for Etapa 1 and the rejected native candidate and [benchmarking](benchmarking.md) for what the off-only evidence can establish.
+Do not restart services, enable profiles, or claim deployment from this checklist. See [project status](project-status.md) for Stage 1 and the rejected native candidate and [benchmarking](benchmarking.md) for what the off-only evidence can establish.

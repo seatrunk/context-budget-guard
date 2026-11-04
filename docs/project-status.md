@@ -1,8 +1,8 @@
 # Project status
 
-**November 4, 2026: Etapa 1 delivered in PR #14 (core and adapters, shadow by default). Native runtime: combined acceptance BLOCKED, delivery support REJECTED. Production activation BLOCKED.**
+**November 4, 2026: Stage 1 delivered in PR #14 (core and adapters, shadow by default). Native runtime: combined acceptance BLOCKED, delivery support REJECTED. Production activation BLOCKED.**
 
-## Etapa 1 (PR #14)
+## Stage 1 (PR #14)
 
 - `cbg/`: pure core with no I/O and no dependencies (limits, render, notes, sanitize, facts, budget, verify). It measures the final rendered bytes and emits a receipt that an independent verifier rechecks, failing closed.
 - `adapters/hermes/`: user plugin on the public `transform_tool_result` hook. `adapters/mcp_proxy/`: MCP stdio proxy. Both default to `shadow`, which records receipts and changes nothing.
@@ -11,15 +11,15 @@
 
 Still pending:
 
-1. Etapa 2 native combined gate against the private patch (base `bf0203a7…`). The core is not the native patch, and B1–B3 are not proven there.
+1. Stage 2 native combined gate against the private patch (base `bf0203a7…`). The core is not the native patch, and B1–B3 are not proven there.
 2. Ricardo's real-task benchmark: shadow first, then A/B enforce, following the README roadmap.
 3. Independent review, after the benchmark.
 
 The private native patch, probes and logs remain absent from this repository and are not upstream Hermes. The installer here only installs the Hermes plugin; it does not change Hermes itself.
 
-## Native combined assessment and review handoff (record, before Etapa 1)
+## Native combined assessment and review handoff (record, before Stage 1)
 
-The [full findings and reviewer brief](reviews/2026-11-04-combined-assessment.md) and [sanitized JSON](reviews/2026-11-04-combined-assessment.json) superseded the historical cycle below as the native progress snapshot; Etapa 1 above is now the current repository state. #6–#9 each reached independent scoped approval in separate frozen checkpoints, but the combined candidate does not pass acceptance. Issues remain open for actual delivery.
+The [full findings and reviewer brief](reviews/2026-11-04-combined-assessment.md) and [sanitized JSON](reviews/2026-11-04-combined-assessment.json) superseded the historical cycle below as the native progress snapshot; Stage 1 above is now the current repository state. #6–#9 each reached independent scoped approval in separate frozen checkpoints, but the combined candidate does not pass acceptance. Issues remain open for actual delivery.
 
 - **Composite gate:** 649 passed, 13 failed, one existing Windows-only skip across 30 files; all 12 staged checks passed. Seven failures concern rotated-session byte ceilings, withheld-note ownership, and SECOND settlement under persistent dependency failure. Six synthetic read/media probes stop at an existing result-type guardrail before budget commit and are separately unsupported/unverified, not established new budget regressions.
 - **Parent reproduction:** one control passed and all seven product-acceptance failures reproduced in two files. These overlap the full gate and are not an extra unique total.

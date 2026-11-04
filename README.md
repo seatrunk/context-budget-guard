@@ -7,7 +7,7 @@
 
 **[The idea](#the-idea) · [How it should work](#how-it-should-work) · [The plan](#the-plan) · [Evaluation](#how-we-plan-to-evaluate-it) · [Try the toolkit](#try-the-toolkit)**
 
-> **Experimental · production activation BLOCKED.** Since Etapa 1 (PR #14) this repository ships a pure, dependency-free core (`cbg/`), a Hermes plugin and an MCP stdio proxy that default to `shadow`, and an offline replay where the candidate passes 39/39 oracles. See [Núcleo e adaptadores](#núcleo-e-adaptadores-v030). The private native patch is still not shipped: its combined local candidate **failed acceptance** and separate delivery-support code was **REJECTED**, as recorded in the [November 4 assessment](docs/reviews/2026-11-04-combined-assessment.md). Still pending: the Etapa 2 native gate, a real-task benchmark and independent review. The graphics explain the design, not measured savings.
+> **Experimental · production activation BLOCKED.** Since Stage 1 (PR #14) this repository ships a pure, dependency-free core (`cbg/`), a Hermes plugin and an MCP stdio proxy that default to `shadow`, and an offline replay where the candidate passes 39/39 oracles. See [Core and adapters](#core-and-adapters-v030). The private native patch is still not shipped: its combined local candidate **failed acceptance** and separate delivery-support code was **REJECTED**, as recorded in the [November 4 assessment](docs/reviews/2026-11-04-combined-assessment.md). Still pending: the Stage 2 native gate, a real-task benchmark and independent review. The graphics explain the design, not measured savings.
 
 ## The idea
 
@@ -48,9 +48,9 @@ Mandatory controls and valid one-use read receipts retain their defined exceptio
 
 ![Six-stage promotion roadmap: define invariants is documented; the isolated build and review is rejected; repair and re-review is next; multi-code replay is proposed; real-task and compaction evaluation is not run; controlled rollout is locked. Offline characterization may expose failures earlier but cannot override a failing oracle.](docs/assets/roadmap.svg)
 
-**Status after Etapa 1:** the published core closes B1–B3 and the core parts of #1 and #3–#9 in its own tests and offline replay. The native runtime is a separate matter: its Etapa 2 combined gate, a real-task benchmark and independent review are still pending, so this is not “ship it.”
+**Status after Stage 1:** the published core closes B1–B3 and the core parts of #1 and #3–#9 in its own tests and offline replay. The native runtime is a separate matter: its Stage 2 combined gate, a real-task benchmark and independent review are still pending, so this is not “ship it.”
 
-### Historical record: native combined assessment (November 4, before Etapa 1)
+### Historical record: native combined assessment (November 4, before Stage 1)
 
 Individual repairs for [#6](https://github.com/seatrunk/context-budget-guard/issues/6), [#7](https://github.com/seatrunk/context-budget-guard/issues/7), [#8](https://github.com/seatrunk/context-budget-guard/issues/8) and [#9](https://github.com/seatrunk/context-budget-guard/issues/9) reached scoped independent approvals, then the **combined gate failed: 649 passed, 13 failed, one existing Windows-only skip**. These are local runtime observations, not public CI results or proof of a shipped fix.
 
@@ -80,119 +80,119 @@ The [evaluation protocol](docs/multi-codebase-evaluation.md) is published; the r
 
 The historical [November 2 baseline](benchmarks/results/2026-11-02-off-baseline.json) remains **guard off, one observation per case**. There is no published on-mode comparison, measured savings, or verified live-backend enforcement. The [benchmark guide](docs/benchmarking.md) explains the evidence limits.
 
-## Núcleo e adaptadores (v0.3.0)
+## Core and adapters (v0.3.0)
 
-Desde a Etapa 1 o repo publica o núcleo puro, sem I/O e sem dependências (Python 3.11+ stdlib):
+Since Stage 1 the repo publishes the pure core, with no I/O and no dependencies (Python 3.11+ stdlib):
 
-| Caminho | O que é |
+| Path | What it is |
 | --- | --- |
-| [`cbg/`](cbg/) | `limits` (linhas LF efetivas, corte UTF-8), `render` (bytes finais com framing, escaping JSON multimodal e sufixo de nota), `notes` (ownership por call ID), `sanitize` (delimitadores), `facts` (exit code e `arquivo:linha`), `budget` (limitador e lote) e `verify` (verificador independente do recibo) |
-| [`adapters/hermes/`](adapters/hermes/README.md) | plugin do Hermes Agent via hook `transform_tool_result` |
-| [`adapters/mcp_proxy/`](adapters/mcp_proxy/README.md) | proxy MCP stdio |
-| [`benchmarks/replay/`](benchmarks/replay/README.md) | replay offline com três braços e oráculos de fidelidade |
-| [`docs/model/notes.md`](docs/model/notes.md) | máquina de estados das notas |
+| [`cbg/`](cbg/) | `limits` (effective LF lines, UTF-8 cut), `render` (final bytes with framing, multimodal JSON escaping and note suffix), `notes` (ownership by call ID), `sanitize` (delimiters), `facts` (exit code and `file:line`), `budget` (limiter and batch) and `verify` (independent receipt verifier) |
+| [`adapters/hermes/`](adapters/hermes/README.md) | Hermes Agent plugin via the `transform_tool_result` hook |
+| [`adapters/mcp_proxy/`](adapters/mcp_proxy/README.md) | MCP stdio proxy |
+| [`benchmarks/replay/`](benchmarks/replay/README.md) | offline replay with three arms and fidelity oracles |
+| [`docs/model/notes.md`](docs/model/notes.md) | note state machine |
 
-O verificador relê a saída final e, se o recibo não bate, entrega um marcador limitado (fail closed). O patch nativo privado continua fora do repo. Ativação em produção segue bloqueada pelo [rollout](docs/rollout.md).
+The verifier rereads the final output and, if the receipt does not match, delivers a bounded marker (fail closed). The private native patch stays outside the repo. Production activation remains blocked by the [rollout](docs/rollout.md).
 
-### Instalação no Hermes
+### Installing in Hermes
 
 ```sh
 sh adapters/hermes/install.sh
 ```
 
-O script copia `adapters/hermes/context_budget_guard/__init__.py` e `plugin.yaml` para `${HERMES_HOME:-~/.hermes}/plugins/context-budget-guard/` e o núcleo `cbg/` inteiro para `vendor/cbg` dentro desse diretório, apagando `__pycache__`. Não ativa nada: o Hermes só carrega plugin listado em `plugins.enabled`.
+The script copies `adapters/hermes/context_budget_guard/__init__.py` and `plugin.yaml` to `${HERMES_HOME:-~/.hermes}/plugins/context-budget-guard/`, and the whole `cbg/` core to `vendor/cbg` inside that directory, deleting `__pycache__`. It activates nothing: Hermes only loads plugins listed in `plugins.enabled`.
 
-### Ligar e desligar
+### Turning it on and off
 
 ```sh
-hermes plugins enable context-budget-guard     # ou plugins.enabled: [context-budget-guard] em ~/.hermes/config.yaml
-# reinicie o Hermes: o gateway descobre plugins uma vez por processo
-hermes plugins disable context-budget-guard    # desliga; reinicie de novo
+hermes plugins enable context-budget-guard     # or plugins.enabled: [context-budget-guard] in ~/.hermes/config.yaml
+# restart Hermes: the gateway discovers plugins once per process
+hermes plugins disable context-budget-guard    # turns it off; restart again
 ```
 
-Remover de vez: apague `~/.hermes/plugins/context-budget-guard`.
+To remove it for good: delete `~/.hermes/plugins/context-budget-guard`.
 
-### Modos e variáveis (adaptador Hermes)
+### Modes and variables (Hermes adapter)
 
-| Variável | Default | Efeito |
+| Variable | Default | Effect |
 | --- | --- | --- |
-| `CBG_MODE` | `shadow` | `shadow` (observação): mede e grava recibo, o modelo recebe o original. `enforce`: substitui resultado acima do teto pelo preview e grava o original em `artifacts/`. `off`: não faz nada nem grava nada. Valor inválido vira `shadow` |
-| `CBG_LOG_DIR` | `$HERMES_HOME/context-budget-guard` (ou `~/.hermes/context-budget-guard`) | diretório de `receipts.jsonl`, `errors.jsonl` e `artifacts/` |
-| `CBG_RESULT_CAP` | `16384` | teto em bytes UTF-8 |
-| `CBG_FRAMING_RESERVE` | `512` | bytes descontados do teto para o invólucro `untrusted_tool_result` que o Hermes aplica depois; o núcleo usa `max(256, CBG_RESULT_CAP - CBG_FRAMING_RESERVE)` |
+| `CBG_MODE` | `shadow` | `shadow` (observation): measures and writes a receipt; the model receives the original. `enforce`: replaces results above the cap with the preview and writes the original to `artifacts/`. `off`: does nothing and writes nothing. An invalid value becomes `shadow` |
+| `CBG_LOG_DIR` | `$HERMES_HOME/context-budget-guard` (or `~/.hermes/context-budget-guard`) | directory for `receipts.jsonl`, `errors.jsonl` and `artifacts/` |
+| `CBG_RESULT_CAP` | `16384` | cap in UTF-8 bytes |
+| `CBG_FRAMING_RESERVE` | `512` | bytes subtracted from the cap for the `untrusted_tool_result` wrapper that Hermes applies afterwards; the core uses `max(256, CBG_RESULT_CAP - CBG_FRAMING_RESERVE)` |
 
-Erro interno do plugin é fail-open: o resultado original segue e `errors.jsonl` recebe `{"tool", "error"}` (só o nome da exceção).
+An internal plugin error is fail-open: the original result goes through and `errors.jsonl` receives `{"tool", "error"}` (only the exception name).
 
-### Proxy MCP
+### MCP proxy
 
 ```sh
-python3 adapters/mcp_proxy/proxy.py [--mode shadow|enforce|off] [--log-dir DIR] [--cap N] -- <comando do servidor real> [args]
+python3 adapters/mcp_proxy/proxy.py [--mode shadow|enforce|off] [--log-dir DIR] [--cap N] -- <real server command> [args]
 ```
 
-No cliente MCP, troque o comando do servidor por essa linha. O servidor real roda como processo filho. Toda mensagem passa sem mudança, exceto respostas a `tools/call`. Defaults: `--mode` vem de `CBG_MODE` (senão `shadow`), `--log-dir` de `CBG_LOG_DIR` (senão `~/.cache/context-budget-guard`), `--cap` de `CBG_RESULT_CAP` (senão `16384`, sem reserva de framing). Em `shadow` a resposta sai byte a byte igual. Em `enforce`, resposta acima do teto vira preview, `isError` e mídia são mantidos, o original vai para `artifacts/` e `structuredContent` é removido (ele contornaria o teto). `off` repassa tudo e não grava recibo.
+In the MCP client, replace the server command with that line. The real server runs as a child process. Every message passes unchanged, except responses to `tools/call`. Defaults: `--mode` comes from `CBG_MODE` (otherwise `shadow`), `--log-dir` from `CBG_LOG_DIR` (otherwise `~/.cache/context-budget-guard`), `--cap` from `CBG_RESULT_CAP` (otherwise `16384`, with no framing reserve). In `shadow` the response is byte-for-byte identical. In `enforce`, a response above the cap becomes a preview, `isError` and media are kept, the original goes to `artifacts/` and `structuredContent` is removed (it would bypass the cap). `off` passes everything through and writes no receipt.
 
-### Aviso: `artifacts/` guarda a saída completa
+### Warning: `artifacts/` holds the complete output
 
-Em `CBG_MODE=enforce` (Hermes) ou `--mode enforce` (proxy MCP), `artifacts/<sha256>.txt` guarda a saída **completa e sem redação** de cada ferramenta cortada. Ela pode conter segredos (tokens, chaves, `.env` lidos pelo agente), PII e código privado. O guard não redige nada.
+With `CBG_MODE=enforce` (Hermes) or `--mode enforce` (MCP proxy), `artifacts/<sha256>.txt` holds the **complete, unredacted** output of every cut tool result. It can contain secrets (tokens, keys, `.env` files read by the agent), PII and private code. The guard redacts nothing.
 
-- O adaptador cria os diretórios com 0700 e os arquivos com 0600. Isso só protege contra outros usuários do sistema, não contra processos do mesmo UID.
-- Não commite nem compartilhe `artifacts/`, `receipts.jsonl` ou `errors.jsonl`. O `.gitignore` do repo já ignora `artifacts/` e `*.jsonl`, mas o `CBG_LOG_DIR` default fica fora do repo de propósito; não aponte esse diretório para dentro de um repositório.
-- Limpar: `rm -rf ~/.hermes/context-budget-guard/artifacts` (Hermes) ou `rm -rf ~/.cache/context-budget-guard/artifacts` (proxy), ou o `CBG_LOG_DIR` que você configurou. Os recibos não têm conteúdo, mas têm nomes de ferramenta e locais de erro (`arquivo:linha`); apague `receipts.jsonl` também se isso for sensível.
-- Em `shadow` nenhum artefato é gravado.
+- The adapter creates directories with 0700 and files with 0600. That only protects against other users on the system, not against processes running under the same UID.
+- Do not commit or share `artifacts/`, `receipts.jsonl` or `errors.jsonl`. The repo `.gitignore` already ignores `artifacts/` and `*.jsonl`, but the default `CBG_LOG_DIR` lives outside the repo on purpose; do not point that directory inside a repository.
+- Cleanup: `rm -rf ~/.hermes/context-budget-guard/artifacts` (Hermes) or `rm -rf ~/.cache/context-budget-guard/artifacts` (proxy), or the `CBG_LOG_DIR` you configured. Receipts hold no content, but they do hold tool names and error locations (`file:line`); delete `receipts.jsonl` too if that is sensitive.
+- In `shadow` no artifact is written.
 
-O `install.sh` recusa destino vazio ou que não termine em `/plugins/context-budget-guard` (aceita `CBG_INSTALL_DEST` para testes) antes de qualquer `rm -rf`.
+`install.sh` refuses an empty destination, or one that does not end in `/plugins/context-budget-guard` (it accepts `CBG_INSTALL_DEST` for tests), before any `rm -rf`.
 
-### Recibos
+### Receipts
 
-Uma linha JSON por tool result em `receipts.jsonl`. Não contém conteúdo do resultado. Em `enforce`, `artifacts/<artifact_sha256>.txt` guarda o original completo (arquivos 0600, diretórios 0700).
+One JSON line per tool result in `receipts.jsonl`. It contains no result content. In `enforce`, `artifacts/<artifact_sha256>.txt` holds the complete original (files 0600, directories 0700).
 
-Campos do núcleo (`cbg/budget.py`, `apply_budget`):
+Core fields (`cbg/budget.py`, `apply_budget`):
 
-| Campo | Significado |
+| Field | Meaning |
 | --- | --- |
-| `call_id` | call ID da ferramenta (no proxy, `mcp-<id JSON-RPC>`) |
-| `mode` | `full` (coube inteiro), `preview` (cabeça e cauda com cabeçalho de fatos), `marker` (só cabeçalho), `withheld` (falha de política ou agregado), `failclosed` (verificador reprovou), `control` (controle obrigatório, sem teto) |
-| `kind` | `text` ou `multimodal` |
-| `cap` | teto aplicado em bytes (`null` para control) |
-| `rendered_bytes` / `rendered_sha256` | tamanho e hash do render final medido |
-| `original_bytes` / `original_lines` | tamanho em bytes UTF-8 e linhas LF efetivas do original |
-| `exit_code` | exit code detectado (`null` se não houver) |
-| `error_locations` | até 5 locais `arquivo:linha` extraídos |
-| `notes_shown` / `notes_marked` | IDs de nota visíveis / representadas só por marcador (vazios no adaptador Hermes) |
-| `media_parts` | número de partes de mídia preservadas |
-| `artifact_sha256` / `artifact_bytes` | hash e tamanho do original |
-| `receipt_used` | se um recibo de leitura aprovada (#7) foi aplicado |
-| `verified` | o verificador aceitou o render final |
-| `violations_before_failclose` | violações achadas antes do fail closed (lista vazia no caso normal) |
-| `policy_error`, `aggregate_bytes`, `aggregate_unsatisfiable` | só em `finalize_batch` (lote), não aparecem nos adaptadores |
+| `call_id` | tool call ID (in the proxy, `mcp-<JSON-RPC id>`) |
+| `mode` | `full` (fit entirely), `preview` (head and tail with a facts header), `marker` (header only), `withheld` (policy or aggregate failure), `failclosed` (verifier rejected), `control` (mandatory control, no cap) |
+| `kind` | `text` or `multimodal` |
+| `cap` | cap applied in bytes (`null` for control) |
+| `rendered_bytes` / `rendered_sha256` | size and hash of the measured final render |
+| `original_bytes` / `original_lines` | size in UTF-8 bytes and effective LF lines of the original |
+| `exit_code` | detected exit code (`null` if none) |
+| `error_locations` | up to 5 extracted `file:line` locations |
+| `notes_shown` / `notes_marked` | IDs of notes that are visible / represented only by a marker (empty in the Hermes adapter) |
+| `media_parts` | number of preserved media parts |
+| `artifact_sha256` / `artifact_bytes` | hash and size of the original |
+| `receipt_used` | whether an approved-read receipt (#7) was applied |
+| `verified` | the verifier accepted the final render |
+| `violations_before_failclose` | violations found before failing closed (empty list in the normal case) |
+| `policy_error`, `aggregate_bytes`, `aggregate_unsatisfiable` | only in `finalize_batch` (batch); they do not appear in the adapters |
 
-Campos acrescentados pelo adaptador Hermes: `ts`, `tool`, `session_id`, `adapter` (`hermes`), `adapter_mode`, `elapsed_us`, `would_change` (o modo não é `full` nem `control`, ou seja, o enforce mudaria o resultado). Pelo proxy: `ts`, `tool`, `adapter` (`mcp_proxy`), `adapter_mode`, `is_error`, `would_change`. O proxy em `enforce` grava também uma linha `{"call_id", "structured_content_dropped": true}` quando remove `structuredContent`.
+Fields added by the Hermes adapter: `ts`, `tool`, `session_id`, `adapter` (`hermes`), `adapter_mode`, `elapsed_us`, `would_change` (the mode is neither `full` nor `control`, so enforce would change the result). By the proxy: `ts`, `tool`, `adapter` (`mcp_proxy`), `adapter_mode`, `is_error`, `would_change`. In `enforce` the proxy also writes a `{"call_id", "structured_content_dropped": true}` line when it removes `structuredContent`.
 
-### Riscos e limites conhecidos
+### Known risks and limits
 
-- O patch nativo privado não foi provado. B1–B3 estão fechados no núcleo publicado, não no runtime privado; o gate nativo combinado continua pendente.
-- O hook público do Hermes só vê resultado em texto. Multimodal passa sem mudança, e as notas de plugin/LSP do runtime não chegam ao hook.
-- Reservamos 512 bytes para o invólucro do Hermes. Em `enforce` o recibo mede o nosso render, não o texto final montado pelo Hermes.
-- O replay offline é sintético: não mede tokens nem custo, e o braço de spill histórico é uma emulação, não o runtime antigo.
+- The private native patch has not been proven. B1–B3 are closed in the published core, not in the private runtime; the native combined gate is still pending.
+- The public Hermes hook only sees text results. Multimodal passes unchanged, and the runtime's plugin/LSP notes do not reach the hook.
+- We reserve 512 bytes for the Hermes wrapper. In `enforce` the receipt measures our render, not the final text assembled by Hermes.
+- The offline replay is synthetic: it does not measure tokens or cost, and the historical-spill arm is an emulation, not the old runtime.
 
-### Roteiro de benchmark em tarefa real
+### Real-task benchmark plan
 
-1. Observação (`CBG_MODE=shadow`, uma semana ou um lote fixo de tarefas). Medir: bytes antes e depois (`original_bytes` e `rendered_bytes`), quantos resultados passariam do teto (`would_change`), violações de oráculo (`verified=false`, `mode=failclosed`, `violations_before_failclose` não vazio) e latência (`elapsed_us`, só no Hermes).
-2. Enforce: as mesmas tarefas, em pares A/B (mesmo prompt, repositório no mesmo commit, mesmo modelo; um braço `shadow`, outro `enforce`, ordem alternada). Comparar sucesso da tarefa (testes passam, critério definido antes), tokens e custo pela fatura ou pelos logs do provedor, leituras de recuperação em `artifacts/` e regressões de fidelidade (o modelo perdeu exit code, local do erro ou nota). Pelo menos 5 pares por tarefa; reportar mediana e IQR.
+1. Observation (`CBG_MODE=shadow`, one week or a fixed batch of tasks). Measure: bytes before and after (`original_bytes` and `rendered_bytes`), how many results would exceed the cap (`would_change`), oracle violations (`verified=false`, `mode=failclosed`, non-empty `violations_before_failclose`) and latency (`elapsed_us`, Hermes only).
+2. Enforce: the same tasks, in A/B pairs (same prompt, repository at the same commit, same model; one arm `shadow`, the other `enforce`, alternating order). Compare task success (tests pass, criterion defined beforehand), tokens and cost from the invoice or provider logs, recovery reads in `artifacts/`, and fidelity regressions (the model lost the exit code, error location or note). At least 5 pairs per task; report median and IQR.
 
-Agregação com jq:
+Aggregation with jq:
 
 ```sh
 R=~/.hermes/context-budget-guard/receipts.jsonl
-jq -s 'map(select(.mode)) | {total: length, passariam_do_teto: map(select(.would_change)) | length,
-        bytes_antes: (map(.original_bytes) | add), bytes_depois: (map(.rendered_bytes) | add),
-        nao_verificados: map(select(.verified == false or .mode == "failclosed")) | length,
-        por_modo: (group_by(.mode) | map({(.[0].mode): length}) | add)}' "$R"
+jq -s 'map(select(.mode)) | {total: length, would_exceed_cap: map(select(.would_change)) | length,
+        bytes_before: (map(.original_bytes) | add), bytes_after: (map(.rendered_bytes) | add),
+        not_verified: map(select(.verified == false or .mode == "failclosed")) | length,
+        by_mode: (group_by(.mode) | map({(.[0].mode): length}) | add)}' "$R"
 jq -s 'map(.elapsed_us // empty) | sort | {n: length, p50: .[length/2|floor], p95: .[length*0.95|floor], max: .[-1]}' "$R"
 jq -r 'select(.would_change) | [.tool, .original_bytes, .rendered_bytes] | @tsv' "$R" | sort | uniq -c | sort -rn | head
 ```
 
-Mesma coisa só com Python stdlib:
+The same with Python stdlib only:
 
 ```sh
 python3 - ~/.hermes/context-budget-guard/receipts.jsonl <<'PY'
@@ -200,22 +200,22 @@ import json, statistics, sys
 r = [json.loads(l) for l in open(sys.argv[1]) if l.strip() and '"mode"' in l]
 cut = [x for x in r if x.get("would_change")]
 lat = sorted(x["elapsed_us"] for x in r if "elapsed_us" in x)
-print("resultados", len(r), "passariam do teto", len(cut))
-print("bytes antes", sum(x["original_bytes"] for x in r), "depois", sum(x["rendered_bytes"] for x in r))
-print("nao verificados", sum(1 for x in r if not x.get("verified") or x["mode"] == "failclosed"))
+print("results", len(r), "would exceed cap", len(cut))
+print("bytes before", sum(x["original_bytes"] for x in r), "after", sum(x["rendered_bytes"] for x in r))
+print("not verified", sum(1 for x in r if not x.get("verified") or x["mode"] == "failclosed"))
 if lat:
-    print("latencia us p50", statistics.median(lat), "p95", lat[int(len(lat) * 0.95)], "max", lat[-1])
+    print("latency us p50", statistics.median(lat), "p95", lat[int(len(lat) * 0.95)], "max", lat[-1])
 PY
 ```
 
-Reproduzir o replay offline (0 chamadas de modelo):
+Reproduce the offline replay (0 model calls):
 
 ```sh
 python3 benchmarks/replay/replay.py --out /tmp/offline-replay.json
-cmp /tmp/offline-replay.json benchmarks/replay/results/offline-replay.json && echo idêntico
+cmp /tmp/offline-replay.json benchmarks/replay/results/offline-replay.json && echo identical
 ```
 
-O comando sai com 1 se o braço candidato falhar algum oráculo. O `cmp` deve ficar mudo e imprimir `idêntico`; o CI faz o mesmo.
+The command exits with 1 if the candidate arm fails any oracle. `cmp` should stay silent and the line should print `identical`; CI does the same.
 
 ## Try the toolkit
 
@@ -241,7 +241,7 @@ The generator refuses existing paths. Generating fixtures does not run a model, 
 | --- | --- |
 | [Operating skill](SKILL.md) | Repeatable evidence and review procedure |
 | [Design](docs/design.md) | Invariants, exceptions and protected-note contract |
-| [Project status](docs/project-status.md) | Etapa 1 delivery, native fingerprints and remaining gates |
+| [Project status](docs/project-status.md) | Stage 1 delivery, native fingerprints and remaining gates |
 | [Latest assessment / reviewer handoff](docs/reviews/2026-11-04-combined-assessment.md) | Scoped progress, combined failures, verifier findings and decisions for the next reviewer |
 | [Prior protected-note cycle](docs/reviews/2026-11-03-protected-notes.md) | Historical rejection and original defect evidence |
 | [Evaluation protocol](docs/multi-codebase-evaluation.md) | Proposed corpus, comparison arms, metrics and promotion gates |

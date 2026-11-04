@@ -1,11 +1,11 @@
-# Proxy MCP stdio
+# MCP stdio proxy
 
-Fica entre o cliente MCP e um servidor MCP real e aplica o orçamento às respostas de `tools/call`. Só stdlib.
+Sits between the MCP client and a real MCP server and applies the budget to `tools/call` responses. Stdlib only.
 
 ```sh
-python3 adapters/mcp_proxy/proxy.py --mode shadow --log-dir ~/.cache/context-budget-guard -- <comando do servidor MCP> [args]
+python3 adapters/mcp_proxy/proxy.py --mode shadow --log-dir ~/.cache/context-budget-guard -- <MCP server command> [args]
 ```
 
-No cliente, troque o comando do servidor pelo comando acima. Default `shadow` (resposta byte a byte igual, só recibos). `--mode enforce` corta para `--cap` bytes (default 16384), grava o original em `artifacts/` (0600) e remove `structuredContent` de respostas cortadas, porque ele contornaria o teto. `isError` e mídia são mantidos. Erro interno no processamento de uma mensagem é fail-open.
+In the client, replace the server command with the command above. Default `shadow` (byte-for-byte identical response, receipts only). `--mode enforce` cuts to `--cap` bytes (default 16384), writes the original to `artifacts/` (0600) and removes `structuredContent` from cut responses, because it would bypass the cap. `isError` and media are kept. An internal error while processing a message is fail-open.
 
-Testes: `tests/adapters/test_mcp_proxy.py`, com servidor falso em `tests/adapters/fake_mcp_server.py`.
+Tests: `tests/adapters/test_mcp_proxy.py`, with a fake server in `tests/adapters/fake_mcp_server.py`.

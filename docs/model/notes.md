@@ -1,27 +1,27 @@
-# Modelo de ownership de notas (Etapa 1)
+# Note ownership model (Stage 1)
 
-Implementação: [`cbg/notes.py`](../../cbg/notes.py). Teste de propriedade: [`tests/invariants/test_notes_model.py`](../../tests/invariants/test_notes_model.py) (10.000 sequências, semente fixa).
+Implementation: [`cbg/notes.py`](../../cbg/notes.py). Property test: [`tests/invariants/test_notes_model.py`](../../tests/invariants/test_notes_model.py) (10,000 sequences, fixed seed).
 
-## Estados e eventos
+## States and events
 
-| De | Evento | Para | Observação |
+| From | Event | To | Note |
 | --- | --- | --- | --- |
-| (nada) | `queue(note_id, owner_call_id, text)` | PENDING | dono é o call ID, não a sessão |
-| PENDING | `bind(call_id, ids, sha256_renderizado)` | DELIVERED | só se `call_id == owner`; grava o sha256 do que o modelo vê |
-| DELIVERED | re-settlement do mesmo call ID | DELIVERED | `eligible()` continua devolvendo a nota; sha256 é atualizado (B2, B3) |
-| DELIVERED | `complete_batch(ids)` | RETIRED | chamado só depois do último settlement do lote |
-| DELIVERED | `rotate_session()` | RETIRED | PENDING **não** muda: nota de linha de outro segmento não se perde |
-| RETIRED | re-settlement tardio do mesmo call ID | RETIRED | histórico com teto (`retired_cap`) mantém a nota visível |
+| (none) | `queue(note_id, owner_call_id, text)` | PENDING | the owner is the call ID, not the session |
+| PENDING | `bind(call_id, ids, rendered_sha256)` | DELIVERED | only if `call_id == owner`; records the sha256 of what the model sees |
+| DELIVERED | re-settlement of the same call ID | DELIVERED | `eligible()` keeps returning the note; the sha256 is updated (B2, B3) |
+| DELIVERED | `complete_batch(ids)` | RETIRED | called only after the batch's last settlement |
+| DELIVERED | `rotate_session()` | RETIRED | PENDING does **not** change: a note for a row in another segment is not lost |
+| RETIRED | late re-settlement of the same call ID | RETIRED | a capped history (`retired_cap`) keeps the note visible |
 
-## Invariantes
+## Invariants
 
-- N1: uma nota aparece em exatamente uma linha renderizada, a do dono.
-- N2: o sha256 registrado no dono é o do render final entregue, inclusive marcador ou withheld (B2).
-- N3: falha de política ou de agregado no segundo settlement não perde nota entregue (B3, #4).
-- N4: rotação de sessão não tira nota PENDING da elegibilidade, e a nota entra na medição do teto (B1).
-- N5: estado limitado: `state_size() <= pendentes + retired_cap` (#9).
-- Teto: toda linha não-control tem `rendered_bytes <= cap`, medido sobre o render final (F1/B1/#6).
+- N1: a note appears in exactly one rendered row, its owner's.
+- N2: the sha256 recorded on the owner is that of the final delivered render, including marker or withheld (B2).
+- N3: a policy or aggregate failure in the second settlement does not lose a delivered note (B3, #4).
+- N4: session rotation does not remove a PENDING note from eligibility, and the note is included in the cap measurement (B1).
+- N5: bounded state: `state_size() <= pending + retired_cap` (#9).
+- Cap: every non-control row has `rendered_bytes <= cap`, measured on the final render (F1/B1/#6).
 
-## Premissa e limite
+## Assumption and limit
 
-Call IDs são únicos por chamada. Se um runtime reutilizar call ID, uma nota aposentada pode reaparecer num re-settlement; o teste de propriedade reutiliza IDs de propósito e só exige N1 dentro do lote. Não há modelo TLA+ nesta etapa: a decisão foi teste de propriedade em stdlib (sem dependência de dev).
+Call IDs are unique per call. If a runtime reuses a call ID, a retired note can reappear in a re-settlement; the property test reuses IDs on purpose and only requires N1 within a batch. There is no TLA+ model in this stage: the decision was a stdlib property test (no dev dependency).
