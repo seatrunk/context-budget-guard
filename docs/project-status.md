@@ -1,12 +1,25 @@
 # Project status
 
-**November 4, 2026 UTC snapshot: combined native acceptance BLOCKED; separate delivery-support review REJECTED; activation BLOCKED.**
+**November 4, 2026: Etapa 1 delivered in PR #14 (core and adapters, shadow by default). Native runtime: combined acceptance BLOCKED, delivery support REJECTED. Production activation BLOCKED.**
 
-This repository contains operating guidance, specifications, and benchmark tooling. The separate local runtime prototype is absent here and is not upstream Hermes. There is no runtime installer here.
+## Etapa 1 (PR #14)
 
-## Current combined assessment and review handoff
+- `cbg/`: pure core with no I/O and no dependencies (limits, render, notes, sanitize, facts, budget, verify). It measures the final rendered bytes and emits a receipt that an independent verifier rechecks, failing closed.
+- `adapters/hermes/`: user plugin on the public `transform_tool_result` hook. `adapters/mcp_proxy/`: MCP stdio proxy. Both default to `shadow`, which records receipts and changes nothing.
+- Tests: B1–B3 and the core parts of #1 and #3–#9, plus 10,000 random note-ownership sequences.
+- Offline replay (#11): 10 synthetic cases, 0 model calls. Candidate 39/39 oracles; unbudgeted 25/39; emulated historical spill 23/39.
 
-The [full findings and reviewer brief](reviews/2026-11-04-combined-assessment.md) and [sanitized JSON](reviews/2026-11-04-combined-assessment.json) supersede the historical cycle below as the current progress snapshot. #6–#9 each reached independent scoped approval in separate frozen checkpoints, but the combined candidate does not pass acceptance. Issues remain open for actual delivery.
+Still pending:
+
+1. Etapa 2 native combined gate against the private patch (base `bf0203a7…`). The core is not the native patch, and B1–B3 are not proven there.
+2. Ricardo's real-task benchmark: shadow first, then A/B enforce, following the README roadmap.
+3. Independent review, after the benchmark.
+
+The private native patch, probes and logs remain absent from this repository and are not upstream Hermes. The installer here only installs the Hermes plugin; it does not change Hermes itself.
+
+## Native combined assessment and review handoff (record, before Etapa 1)
+
+The [full findings and reviewer brief](reviews/2026-11-04-combined-assessment.md) and [sanitized JSON](reviews/2026-11-04-combined-assessment.json) superseded the historical cycle below as the native progress snapshot; Etapa 1 above is now the current repository state. #6–#9 each reached independent scoped approval in separate frozen checkpoints, but the combined candidate does not pass acceptance. Issues remain open for actual delivery.
 
 - **Composite gate:** 649 passed, 13 failed, one existing Windows-only skip across 30 files; all 12 staged checks passed. Seven failures concern rotated-session byte ceilings, withheld-note ownership, and SECOND settlement under persistent dependency failure. Six synthetic read/media probes stop at an existing result-type guardrail before budget commit and are separately unsupported/unverified, not established new budget regressions.
 - **Parent reproduction:** one control passed and all seven product-acceptance failures reproduced in two files. These overlap the full gate and are not an extra unique total.
@@ -45,6 +58,6 @@ That historical cycle's agreed implementation/review allowance was exhausted and
 
 ## Evaluation next
 
-The [multi-codebase evaluation protocol](multi-codebase-evaluation.md) is a proposal, not an implemented replay harness or measured comparison. [#10](https://github.com/seatrunk/context-budget-guard/issues/10) tracks that specification; [#11](https://github.com/seatrunk/context-budget-guard/issues/11) tracks future implementation and execution. Offline characterization can expose known failures; it cannot grant approval to a failing candidate.
+The [multi-codebase evaluation protocol](multi-codebase-evaluation.md) is specified in [#10](https://github.com/seatrunk/context-budget-guard/issues/10). PR #14 implements its offline replay part ([#11](https://github.com/seatrunk/context-budget-guard/issues/11)) against the published core, with synthetic fixtures. Replaying the native candidate and the real-task benchmark are still pending. Offline characterization can expose known failures; it cannot grant approval to a failing candidate.
 
-The historical [off-only baseline](../benchmarks/results/2026-11-02-off-baseline.json) remains unchanged. There is still no published on-mode comparison, measured savings, production rollout, or verified live-backend enforcement. See [benchmarking](benchmarking.md) and [rollout](rollout.md).
+The historical [off-only baseline](../benchmarks/results/2026-11-02-off-baseline.json) remains unchanged. Beyond the synthetic offline replay, there is still no real-task on-mode comparison, measured token or cost savings, production rollout, or verified live-backend enforcement. See [benchmarking](benchmarking.md) and [rollout](rollout.md).
