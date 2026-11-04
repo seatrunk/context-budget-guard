@@ -77,6 +77,27 @@ The [evaluation protocol](docs/multi-codebase-evaluation.md) is published; the r
 
 The historical [November 2 baseline](benchmarks/results/2026-11-02-off-baseline.json) remains **guard off, one observation per case**. There is no published on-mode comparison, measured savings, or verified live-backend enforcement. The [benchmark guide](docs/benchmarking.md) explains the evidence limits.
 
+## Núcleo e adaptadores (v0.3.0)
+
+Desde a Etapa 1 o repo publica o núcleo puro, sem I/O e sem dependências (Python 3.11+ stdlib):
+
+| Caminho | O que é |
+| --- | --- |
+| [`cbg/`](cbg/) | `limits` (linhas LF efetivas, corte UTF-8), `render` (bytes finais com framing, escaping JSON multimodal e sufixo de nota), `notes` (ownership por call ID), `sanitize` (delimitadores), `budget` (limitador e lote) e `verify` (verificador independente do recibo) |
+| [`adapters/hermes/`](adapters/hermes/README.md) | plugin do Hermes Agent via hook `transform_tool_result`, default `shadow` |
+| [`adapters/mcp_proxy/`](adapters/mcp_proxy/README.md) | proxy MCP stdio, default `shadow` |
+| [`benchmarks/replay/`](benchmarks/replay/README.md) | replay offline com três braços e oráculos de fidelidade |
+| [`docs/model/notes.md`](docs/model/notes.md) | máquina de estados das notas |
+
+Cada resultado sai com um recibo (`rendered_bytes`, `rendered_sha256`, fatos preservados, sha256 do artefato). O verificador relê a saída final e, se o recibo não bate, entrega um marcador limitado (fail closed).
+
+```sh
+python3 -m unittest discover -s tests -v
+python3 benchmarks/replay/replay.py
+```
+
+O patch nativo privado continua fora do repo. Ativação em produção segue bloqueada pelo [rollout](docs/rollout.md).
+
 ## Try the toolkit
 
 Python 3.11+, no dependency installation, credentials or live profile required:

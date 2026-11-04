@@ -25,8 +25,14 @@ jobs:
           persist-credentials: false
       - name: Repository contracts and public-data hygiene
         run: python3 scripts/check_repo.py
-      - name: Fixture and measurement tests (not runtime integration tests)
+      - name: Lint mínimo (compileall)
+        run: python3 -m compileall -q cbg adapters benchmarks scripts tests
+      - name: Núcleo, adaptadores, invariantes e tooling
         run: python3 -m unittest discover -s tests -v
+      - name: Replay offline (sem modelo, sem rede)
+        run: |
+          python3 benchmarks/replay/replay.py --out "$RUNNER_TEMP/offline-replay.json"
+          cmp "$RUNNER_TEMP/offline-replay.json" benchmarks/replay/results/offline-replay.json
 
   pr-policy:
     name: pr-policy

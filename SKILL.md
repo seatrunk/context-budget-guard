@@ -1,7 +1,7 @@
 ---
 name: context-budget-guard
 description: "Use when reviewing output-budget evidence or rollout gates."
-version: 0.2.0
+version: 0.3.0
 author: Ricardo Margalho (seatrunk), Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -13,7 +13,7 @@ metadata:
 
 # Context budget guard operating procedure
 
-Use this skill to review proposed output budgeting and reproduce repository checks. It is an operating procedure, not runtime enforcement: loading it changes no configuration and supplies no installer.
+Use this skill to review proposed output budgeting and reproduce repository checks. It is an operating procedure, not runtime enforcement: loading it changes no configuration. The optional Hermes installer lives in `adapters/hermes/` and must be run explicitly.
 
 ## When to use
 
@@ -24,6 +24,12 @@ Use this skill to review proposed output budgeting and reproduce repository chec
 ## Prerequisites
 
 Read [project status](docs/project-status.md) and [design](docs/design.md) with `read_file`. Use Python 3.11+ from the repository root. No dependency installation, credentials, or live profile access is required.
+
+## Núcleo executável (0.3.0)
+
+- Testes e invariantes: `python3 -m unittest discover -s tests -v`.
+- Replay offline: `python3 benchmarks/replay/replay.py` (0 chamadas de modelo; sai 1 se o candidato falhar um oráculo).
+- Hermes: [adapters/hermes/README.md](adapters/hermes/README.md). Comece em `CBG_MODE=shadow` e leia `receipts.jsonl` antes de qualquer `enforce`.
 
 ## Procedure
 
