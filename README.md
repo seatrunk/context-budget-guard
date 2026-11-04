@@ -7,7 +7,7 @@
 
 **[The idea](#the-idea) · [How it should work](#how-it-should-work) · [The plan](#the-plan) · [Evaluation](#how-we-plan-to-evaluate-it) · [Try the toolkit](#try-the-toolkit)**
 
-> **Experimental · activation BLOCKED.** This repository ships an operating skill, specifications and benchmark tools—not runtime enforcement or an installer. The separate local candidate was **REJECTED** by independent review. These graphics explain the intended design; they do not announce a working release or measured savings.
+> **Experimental · activation BLOCKED.** This repository ships an operating skill, specifications and benchmark tools—not runtime enforcement or an installer. The combined local candidate **fails acceptance**, and separate delivery-support code was **REJECTED** in review. Read the [latest findings and reviewer handoff](docs/reviews/2026-11-04-combined-assessment.md). These graphics explain the intended design, not a working release or measured savings.
 
 ## The idea
 
@@ -50,17 +50,18 @@ Mandatory controls and valid one-use read receipts retain their defined exceptio
 
 **We are between “review rejected” and “repair + re-review,” not between “tests passed” and “ship it.”**
 
-The latest cycle added protected note handling and passed its primary short plugin/LSP aggregate-spill reproduction. Its existing suites passed, but their permanent tests missed the three boundaries below. Fresh adversarial review reproduced:
+Individual repairs for [#6](https://github.com/seatrunk/context-budget-guard/issues/6), [#7](https://github.com/seatrunk/context-budget-guard/issues/7), [#8](https://github.com/seatrunk/context-budget-guard/issues/8) and [#9](https://github.com/seatrunk/context-budget-guard/issues/9) reached scoped independent approvals, then the **combined gate failed: 649 passed, 13 failed, one existing Windows-only skip**. These are local runtime observations, not public CI results or proof of a shipped fix.
 
-| Open gap | Why it matters | Track it |
+| Current blocker | Observed result | Next review question |
 | --- | --- | --- |
-| Multimodal output can exceed the byte ceiling in the corrective fallback | Reproduced with deliberately non-progressing aggregate enforcement; see the [F1 probe scope and string control](docs/reviews/2026-11-03-protected-notes.md#f1--corrective-multimodal-compaction-exceeds-the-ceiling-p1) | [#6](https://github.com/seatrunk/context-budget-guard/issues/6) |
-| Finalization re-limits an already-approved note-bearing read after its one-use receipt was consumed | Preserve the approved output; do not retain or replay the receipt | [#7](https://github.com/seatrunk/context-budget-guard/issues/7) |
-| A literal wrapper delimiter in a queued note remains unsanitized | Test the note's own trust boundary, not just the tool body's | [#8](https://github.com/seatrunk/context-budget-guard/issues/8) |
+| Session rotation | Two approved-read rows remain above 16,384 bytes | Reconcile re-budgeting with old-scope notice ownership |
+| Fallback ownership | A bounded media marker disagrees with the owned original suffix | Define ownership of the actual displayed notice |
+| Persistent failure | Four SECOND-settlement cases lose a notice | Reconcile owner retirement with repeated finalization |
+| Delivery-support integrity | Independent review rejected two verifier gaps despite 37 existing tests passing | Verify actual executing source and managed dependencies |
 
-[#9](https://github.com/seatrunk/context-budget-guard/issues/9) separately tracks the lifetime of delivered control-note ownership. The original correctness issues remain open; these graphics do not close them.
+Six additional synthetic read/media probes fail before budget commit at an existing result-type guardrail; they are separately unsupported/unverified, not established new budget regressions. The parent independently reproduced all seven product-acceptance failures. The delivery-support implementation and its tests remain separate and are **not shipped on this documentation branch**.
 
-Read the [current status](docs/project-status.md), [cycle report](docs/reviews/2026-11-03-protected-notes.md), or [sanitized evidence JSON](docs/reviews/2026-11-03-protected-notes.json). The native patch and complete probe package are not distributed here, so public CI cannot reproduce or approve that absent runtime.
+Read the [latest findings and reviewer brief](docs/reviews/2026-11-04-combined-assessment.md), [sanitized evidence JSON](docs/reviews/2026-11-04-combined-assessment.json), and [current status](docs/project-status.md). The [earlier protected-note rejection](docs/reviews/2026-11-03-protected-notes.md) remains historical evidence. Native patches, full probes and the rejected support code are not distributed here; fingerprints are local snapshot identifiers, not a self-contained reproduction package. Issues remain open and activation remains blocked.
 
 ## How we plan to evaluate it
 
@@ -102,7 +103,8 @@ The generator refuses existing paths. Generating fixtures does not run a model, 
 | [Operating skill](SKILL.md) | Repeatable evidence and review procedure |
 | [Design](docs/design.md) | Invariants, exceptions and protected-note contract |
 | [Project status](docs/project-status.md) | Exact candidate fingerprint and remaining blockers |
-| [Latest cycle](docs/reviews/2026-11-03-protected-notes.md) | What passed, what failed and what we learned |
+| [Latest assessment / reviewer handoff](docs/reviews/2026-11-04-combined-assessment.md) | Scoped progress, combined failures, verifier findings and decisions for the next reviewer |
+| [Prior protected-note cycle](docs/reviews/2026-11-03-protected-notes.md) | Historical rejection and original defect evidence |
 | [Evaluation protocol](docs/multi-codebase-evaluation.md) | Proposed corpus, comparison arms, metrics and promotion gates |
 | [Rollout](docs/rollout.md) | Separate approval and rollback requirements |
 | [Governance](docs/repository-governance.md) | Required review and branch protections |

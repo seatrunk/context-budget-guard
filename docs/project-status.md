@@ -1,10 +1,22 @@
 # Project status
 
-**November 3, 2026: experimental; activation BLOCKED. Latest independent verdict: REJECT.**
+**November 4, 2026 UTC snapshot: combined native acceptance BLOCKED; separate delivery-support review REJECTED; activation BLOCKED.**
 
 This repository contains operating guidance, specifications, and benchmark tooling. The separate local runtime prototype is absent here and is not upstream Hermes. There is no runtime installer here.
 
-## Latest cycle
+## Current combined assessment and review handoff
+
+The [full findings and reviewer brief](reviews/2026-11-04-combined-assessment.md) and [sanitized JSON](reviews/2026-11-04-combined-assessment.json) supersede the historical cycle below as the current progress snapshot. #6–#9 each reached independent scoped approval in separate frozen checkpoints, but the combined candidate does not pass acceptance. Issues remain open for actual delivery.
+
+- **Composite gate:** 649 passed, 13 failed, one existing Windows-only skip across 30 files; all 12 staged checks passed. Seven failures concern rotated-session byte ceilings, withheld-note ownership, and SECOND settlement under persistent dependency failure. Six synthetic read/media probes stop at an existing result-type guardrail before budget commit and are separately unsupported/unverified, not established new budget regressions.
+- **Parent reproduction:** one control passed and all seven product-acceptance failures reproduced in two files. These overlap the full gate and are not an extra unique total.
+- **Separate delivery support:** implemented in a local worktree, then **REJECTED** by scoped independent review. Its 37 existing tests passed, but two RED integrity assertions show untracked Python import shadowing and index-flag-hidden inherited changes. Those 37 tests and the six-file support implementation are not included in this documentation-only publication.
+- **Exact composite:** tree `e35b5b0fd06cdaaa36bf5ac5adfa24b757f4be84`; full patch SHA-256 `a154f4438caece252141b4a1698abb7a2e0800139e8e9ae41e6fca3f372685f2`. The report records predecessor/support identities and all attribution limits.
+- **Stopped:** no new ownership/delivery contract selected, repair round started, composite approval, runtime payload export, actual native CI, installation or activation. Bundle review-driven repairs remain 0 of 2 used. This handoff asks another reviewer to propose bounded modifications; it is not permission to implement or enable them.
+
+The separately retained source, full patches, probes and raw logs are absent from this public repository. Fingerprints identify local snapshots, not remotely fetchable objects. Public CI validates the unchanged public tooling and published documentation; it cannot reproduce the absent runtime or delivery-support candidate.
+
+## Historical protected-note cycle — November 3
 
 The protected-note implementation preserves the primary short plugin/LSP note in its targeted aggregate-spill regression, but the exact candidate still fails the full acceptance contract. Independent review reproduced:
 
@@ -16,7 +28,7 @@ The protected-note implementation preserves the primary short plugin/LSP note in
 
 Original issues [#1](https://github.com/seatrunk/context-budget-guard/issues/1), [#3](https://github.com/seatrunk/context-budget-guard/issues/3), [#4](https://github.com/seatrunk/context-budget-guard/issues/4), and [#5](https://github.com/seatrunk/context-budget-guard/issues/5) remain unresolved: targeted successes do not override the rejected exact candidate.
 
-## Evidence identity and limits
+## Historical evidence identity and limits
 
 ```text
 base revision: bf0203a794a07aac3ff764972ab9087baa4e4f4e
@@ -29,7 +41,7 @@ The implementer recorded 641 passes and one existing Windows-only skip across 17
 
 Read the [cycle report](reviews/2026-11-03-protected-notes.md) and its [sanitized machine-readable record](reviews/2026-11-03-protected-notes.json). Native patches, private logs, and probes are not distributed here; this summary is not a self-contained reproduction package. Public repository CI checks tooling and documentation, not those native integration claims.
 
-The agreed implementation/review allowance was exhausted. Work stopped after rejection, without a repair loop, live application, profile change, or service restart. Another runtime repair cycle needs explicit authorization and fresh review.
+That historical cycle's agreed implementation/review allowance was exhausted and it stopped after rejection. Subsequently authorized #6–#9 repairs reached scoped approvals, but the current combined assessment remains blocked as documented above. Neither the historical rejection nor later approvals authorize live application, profile changes or service restarts.
 
 ## Evaluation next
 

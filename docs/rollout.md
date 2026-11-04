@@ -5,7 +5,8 @@ Activation is currently **BLOCKED**. This page is a future approval checklist, n
 Before any separate runtime trial:
 
 - Resolve the missing short plugin/LSP note after aggregate spill. Add a synthetic regression and inspect model-visible output.
-- Resolve the latest [reproduced blockers](project-status.md): corrective multimodal bytes, receipt preservation through finalization, and literal-note delimiters. Define the separate control-note ownership lifetime.
+- Resolve the latest [combined assessment blockers](reviews/2026-11-04-combined-assessment.md): rotated-session re-budgeting, exact ownership of withheld notice presentations, and repeated settlement while dependencies remain failed. Individual #6–#9 approvals do not establish compatibility.
+- Repair and independently re-review the separate delivery-support verifier: untracked import shadowing and index-flag-hidden inherited changes currently defeat its intended candidate-identity checks. Validate the actual exported payload, public-pin materialization, managed PM setup and native CI; none is established by documentation/tooling CI.
 - Verify every [design invariant](design.md), including mandatory exceptions, valid media, failure metadata, artifact privacy, and cached profile/session behavior.
 - Record the exact base revision and patch SHA-256. Obtain independent review of that exact candidate; test totals alone cannot grant approval.
 - Agree on explicit human authorization, isolated synthetic trial scope, stop conditions, and a tested rollback to the prior configuration. Do not use private live transcripts as fixtures.
