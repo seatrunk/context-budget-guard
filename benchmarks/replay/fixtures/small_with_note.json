@@ -1,0 +1,24 @@
+{
+ "case": "small_with_note",
+ "expect": {
+  "s-1": {
+   "notes": [
+    "n-small"
+   ]
+  }
+ },
+ "language": "text",
+ "notes": [
+  {
+   "note_id": "n-small",
+   "owner": "s-1",
+   "text": "[System note: plugin synthetic is live now.]"
+  }
+ ],
+ "rows": [
+  {
+   "call_id": "s-1",
+   "result": "ok\n"
+  }
+ ]
+}

@@ -1,0 +1,597 @@
+{
+ "arms": {
+  "candidate": {
+   "bytes_total": 113707,
+   "failures": [],
+   "oracle_checks": 39,
+   "oracle_pass": 39
+  },
+  "historical": {
+   "bytes_total": 131532,
+   "failures": [
+    "issue1_aggregate_spill_note/a-1:note_once_outside",
+    "issue1_aggregate_spill_note/aggregate_le_budget",
+    "issue6_multimodal_escaped/m-1:bytes_le_cap",
+    "issue6_multimodal_escaped/m-1:exit_code",
+    "issue6_multimodal_escaped/m-1:note_once_outside",
+    "issue8_delimiter_note/d-1:single_wrapper",
+    "issue8_delimiter_note/d-1:note_once_outside",
+    "python_traceback/py-1:exit_code",
+    "python_traceback/py-1:location",
+    "rust_cargo_mid/rs-1:exit_code",
+    "rust_cargo_mid/rs-1:location",
+    "sql_migration_log/sql-1:exit_code",
+    "sql_migration_log/sql-1:location",
+    "typescript_tsc/ts-1:exit_code",
+    "utf8_multibyte/u-1:bytes_le_cap",
+    "utf8_multibyte/u-1:location"
+   ],
+   "oracle_checks": 39,
+   "oracle_pass": 23
+  },
+  "none": {
+   "bytes_total": 244472,
+   "failures": [
+    "issue1_aggregate_spill_note/aggregate_le_budget",
+    "issue6_multimodal_escaped/m-1:bytes_le_cap",
+    "issue6_multimodal_escaped/m-1:exit_code",
+    "issue8_delimiter_note/d-1:single_wrapper",
+    "issue8_delimiter_note/d-1:note_once_outside",
+    "python_traceback/py-1:bytes_le_cap",
+    "python_traceback/py-1:exit_code",
+    "rust_cargo_mid/rs-1:bytes_le_cap",
+    "rust_cargo_mid/rs-1:exit_code",
+    "sql_migration_log/sql-1:bytes_le_cap",
+    "sql_migration_log/sql-1:exit_code",
+    "typescript_tsc/ts-1:bytes_le_cap",
+    "typescript_tsc/ts-1:exit_code",
+    "utf8_multibyte/u-1:bytes_le_cap"
+   ],
+   "oracle_checks": 39,
+   "oracle_pass": 25
+  }
+ },
+ "cap_bytes": 16384,
+ "cases": [
+  {
+   "arms": {
+    "candidate": {
+     "aggregate_bytes": 12000,
+     "aggregate_le_budget": true,
+     "rows": [
+      {
+       "bytes": 6000,
+       "call_id": "a-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "note_once_outside": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 6000,
+       "call_id": "a-2",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "historical": {
+     "aggregate_bytes": 12128,
+     "aggregate_le_budget": false,
+     "rows": [
+      {
+       "bytes": 4079,
+       "call_id": "a-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "note_once_outside": false,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 8049,
+       "call_id": "a-2",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "none": {
+     "aggregate_bytes": 17159,
+     "aggregate_le_budget": false,
+     "rows": [
+      {
+       "bytes": 9110,
+       "call_id": "a-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "note_once_outside": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 8049,
+       "call_id": "a-2",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    }
+   },
+   "case": "issue1_aggregate_spill_note",
+   "language": "text"
+  },
+  {
+   "arms": {
+    "candidate": {
+     "aggregate_bytes": 16232,
+     "aggregate_le_budget": true,
+     "rows": [
+      {
+       "bytes": 16232,
+       "call_id": "m-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "exit_code": true,
+        "media_preserved": true,
+        "note_once_outside": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "historical": {
+     "aggregate_bytes": 18415,
+     "aggregate_le_budget": true,
+     "rows": [
+      {
+       "bytes": 18415,
+       "call_id": "m-1",
+       "oracles": {
+        "bytes_le_cap": false,
+        "exit_code": false,
+        "media_preserved": true,
+        "note_once_outside": false,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "none": {
+     "aggregate_bytes": 30627,
+     "aggregate_le_budget": true,
+     "rows": [
+      {
+       "bytes": 30627,
+       "call_id": "m-1",
+       "oracles": {
+        "bytes_le_cap": false,
+        "exit_code": false,
+        "media_preserved": true,
+        "note_once_outside": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    }
+   },
+   "case": "issue6_multimodal_escaped",
+   "language": "json"
+  },
+  {
+   "arms": {
+    "candidate": {
+     "aggregate_bytes": 123,
+     "rows": [
+      {
+       "bytes": 123,
+       "call_id": "d-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "note_once_outside": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "historical": {
+     "aggregate_bytes": 120,
+     "rows": [
+      {
+       "bytes": 120,
+       "call_id": "d-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "note_once_outside": false,
+        "single_wrapper": false
+       }
+      }
+     ]
+    },
+    "none": {
+     "aggregate_bytes": 120,
+     "rows": [
+      {
+       "bytes": 120,
+       "call_id": "d-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "note_once_outside": false,
+        "single_wrapper": false
+       }
+      }
+     ]
+    }
+   },
+   "case": "issue8_delimiter_note",
+   "language": "text"
+  },
+  {
+   "arms": {
+    "candidate": {
+     "aggregate_bytes": 16384,
+     "rows": [
+      {
+       "bytes": 16384,
+       "call_id": "py-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "exit_code": true,
+        "location": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "historical": {
+     "aggregate_bytes": 16271,
+     "rows": [
+      {
+       "bytes": 16271,
+       "call_id": "py-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "exit_code": false,
+        "location": false,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "none": {
+     "aggregate_bytes": 31658,
+     "rows": [
+      {
+       "bytes": 31658,
+       "call_id": "py-1",
+       "oracles": {
+        "bytes_le_cap": false,
+        "exit_code": false,
+        "location": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    }
+   },
+   "case": "python_traceback",
+   "language": "python"
+  },
+  {
+   "arms": {
+    "candidate": {
+     "aggregate_bytes": 3309,
+     "rows": [
+      {
+       "bytes": 3309,
+       "call_id": "r-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "historical": {
+     "aggregate_bytes": 3208,
+     "rows": [
+      {
+       "bytes": 3208,
+       "call_id": "r-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "none": {
+     "aggregate_bytes": 3208,
+     "rows": [
+      {
+       "bytes": 3208,
+       "call_id": "r-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    }
+   },
+   "case": "read_351_lines",
+   "language": "text"
+  },
+  {
+   "arms": {
+    "candidate": {
+     "aggregate_bytes": 16384,
+     "rows": [
+      {
+       "bytes": 16384,
+       "call_id": "rs-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "exit_code": true,
+        "location": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "historical": {
+     "aggregate_bytes": 16271,
+     "rows": [
+      {
+       "bytes": 16271,
+       "call_id": "rs-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "exit_code": false,
+        "location": false,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "none": {
+     "aggregate_bytes": 37364,
+     "rows": [
+      {
+       "bytes": 37364,
+       "call_id": "rs-1",
+       "oracles": {
+        "bytes_le_cap": false,
+        "exit_code": false,
+        "location": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    }
+   },
+   "case": "rust_cargo_mid",
+   "language": "rust"
+  },
+  {
+   "arms": {
+    "candidate": {
+     "aggregate_bytes": 124,
+     "rows": [
+      {
+       "bytes": 124,
+       "call_id": "s-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "note_once_outside": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "historical": {
+     "aggregate_bytes": 124,
+     "rows": [
+      {
+       "bytes": 124,
+       "call_id": "s-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "note_once_outside": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "none": {
+     "aggregate_bytes": 124,
+     "rows": [
+      {
+       "bytes": 124,
+       "call_id": "s-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "note_once_outside": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    }
+   },
+   "case": "small_with_note",
+   "language": "text"
+  },
+  {
+   "arms": {
+    "candidate": {
+     "aggregate_bytes": 16384,
+     "rows": [
+      {
+       "bytes": 16384,
+       "call_id": "sql-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "exit_code": true,
+        "location": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "historical": {
+     "aggregate_bytes": 16271,
+     "rows": [
+      {
+       "bytes": 16271,
+       "call_id": "sql-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "exit_code": false,
+        "location": false,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "none": {
+     "aggregate_bytes": 28502,
+     "rows": [
+      {
+       "bytes": 28502,
+       "call_id": "sql-1",
+       "oracles": {
+        "bytes_le_cap": false,
+        "exit_code": false,
+        "location": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    }
+   },
+   "case": "sql_migration_log",
+   "language": "sql"
+  },
+  {
+   "arms": {
+    "candidate": {
+     "aggregate_bytes": 16384,
+     "rows": [
+      {
+       "bytes": 16384,
+       "call_id": "ts-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "exit_code": true,
+        "location": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "historical": {
+     "aggregate_bytes": 16271,
+     "rows": [
+      {
+       "bytes": 16271,
+       "call_id": "ts-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "exit_code": false,
+        "location": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "none": {
+     "aggregate_bytes": 35636,
+     "rows": [
+      {
+       "bytes": 35636,
+       "call_id": "ts-1",
+       "oracles": {
+        "bytes_le_cap": false,
+        "exit_code": false,
+        "location": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    }
+   },
+   "case": "typescript_tsc",
+   "language": "typescript"
+  },
+  {
+   "arms": {
+    "candidate": {
+     "aggregate_bytes": 16383,
+     "rows": [
+      {
+       "bytes": 16383,
+       "call_id": "u-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "location": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "historical": {
+     "aggregate_bytes": 32453,
+     "rows": [
+      {
+       "bytes": 32453,
+       "call_id": "u-1",
+       "oracles": {
+        "bytes_le_cap": false,
+        "location": false,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "none": {
+     "aggregate_bytes": 60074,
+     "rows": [
+      {
+       "bytes": 60074,
+       "call_id": "u-1",
+       "oracles": {
+        "bytes_le_cap": false,
+        "location": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    }
+   },
+   "case": "utf8_multibyte",
+   "language": "text"
+  }
+ ],
+ "fixtures": {
+  "issue1_aggregate_spill_note.json": "a420313a02ad97ffc2173c1308dca3c4d784bc646c36919c5ee2b07d972211d3",
+  "issue6_multimodal_escaped.json": "6bfe20132f34e9b96aaa91e4d0321fd543b9265597d8e476d967ee7e4dd86c73",
+  "issue8_delimiter_note.json": "620a966f114f955bd2cbb59cd5116838e61e7bfdf20f760dc149dbe51efb3a32",
+  "python_traceback.json": "bec15cd2184fe60e5a99ddda4e3303972eddd93f5c79a48a8ad0606053044c77",
+  "read_351_lines.json": "6d6eb24cb429ffdbb758a8c0a0d453fedcc3d083821c44480710a57852610384",
+  "rust_cargo_mid.json": "b08f53c52463dfb1c0e0c3b32d5499e2ccbfa091a42f6802741add4b664c3cd0",
+  "small_with_note.json": "59554461eddf3afbd2d0bf386c98df119226b518a39db991c6a27846b05833bb",
+  "sql_migration_log.json": "39a080019849d9c35f5ccfc795c1691bd73728979c600dfb5d19d2ff3542cf65",
+  "typescript_tsc.json": "c84c40340190db06e329b22c735290d927546300e14104a76af8108f6b4bc5f0",
+  "utf8_multibyte.json": "9b835fbc3cb9564ee8b155b17d6737623ad0c37718887c2b5637f238a01ad4e4"
+ },
+ "model_calls": 0,
+ "schema": "cbg-offline-replay/1",
+ "synthetic": true
+}
