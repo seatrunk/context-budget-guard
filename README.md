@@ -131,6 +131,17 @@ python3 adapters/mcp_proxy/proxy.py [--mode shadow|enforce|off] [--log-dir DIR] 
 
 No cliente MCP, troque o comando do servidor por essa linha. O servidor real roda como processo filho. Toda mensagem passa sem mudança, exceto respostas a `tools/call`. Defaults: `--mode` vem de `CBG_MODE` (senão `shadow`), `--log-dir` de `CBG_LOG_DIR` (senão `~/.cache/context-budget-guard`), `--cap` de `CBG_RESULT_CAP` (senão `16384`, sem reserva de framing). Em `shadow` a resposta sai byte a byte igual. Em `enforce`, resposta acima do teto vira preview, `isError` e mídia são mantidos, o original vai para `artifacts/` e `structuredContent` é removido (ele contornaria o teto). `off` repassa tudo e não grava recibo.
 
+### Aviso: `artifacts/` guarda a saída completa
+
+Em `CBG_MODE=enforce` (Hermes) ou `--mode enforce` (proxy MCP), `artifacts/<sha256>.txt` guarda a saída **completa e sem redação** de cada ferramenta cortada. Ela pode conter segredos (tokens, chaves, `.env` lidos pelo agente), PII e código privado. O guard não redige nada.
+
+- O adaptador cria os diretórios com 0700 e os arquivos com 0600. Isso só protege contra outros usuários do sistema, não contra processos do mesmo UID.
+- Não commite nem compartilhe `artifacts/`, `receipts.jsonl` ou `errors.jsonl`. O `.gitignore` do repo já ignora `artifacts/` e `*.jsonl`, mas o `CBG_LOG_DIR` default fica fora do repo de propósito; não aponte esse diretório para dentro de um repositório.
+- Limpar: `rm -rf ~/.hermes/context-budget-guard/artifacts` (Hermes) ou `rm -rf ~/.cache/context-budget-guard/artifacts` (proxy), ou o `CBG_LOG_DIR` que você configurou. Os recibos não têm conteúdo, mas têm nomes de ferramenta e locais de erro (`arquivo:linha`); apague `receipts.jsonl` também se isso for sensível.
+- Em `shadow` nenhum artefato é gravado.
+
+O `install.sh` recusa destino vazio ou que não termine em `/plugins/context-budget-guard` (aceita `CBG_INSTALL_DEST` para testes) antes de qualquer `rm -rf`.
+
 ### Recibos
 
 Uma linha JSON por tool result em `receipts.jsonl`. Não contém conteúdo do resultado. Em `enforce`, `artifacts/<artifact_sha256>.txt` guarda o original completo (arquivos 0600, diretórios 0700).

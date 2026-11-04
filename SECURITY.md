@@ -1,12 +1,21 @@
 # Security policy
 
-This repository ships documentation and benchmark tooling, not the separate runtime prototype. No supported runtime release or security audit is claimed. A passing test suite does not establish a security guarantee.
+This repository ships the pure `cbg/` core, a Hermes plugin, an MCP stdio proxy, documentation and benchmark tooling. It does not ship the separate native runtime prototype. No supported runtime release or security audit is claimed. A passing test suite does not establish a security guarantee.
 
 ## Report privately
 
-Do not put credentials, private transcripts, profile contents, session identifiers, or exploitable private details into public issues or PRs. Use the repository's **Security → Report a vulnerability** entry for private reporting; availability depends on repository settings. If that entry is unavailable, ask a maintainer for a private channel without posting the sensitive details.
+Do not put credentials, private transcripts, profile contents, session identifiers, or exploitable private details into public issues or PRs. Report privately through GitHub's [Report a vulnerability](https://github.com/seatrunk/context-budget-guard/security/advisories/new) form (private vulnerability reporting is enabled for this repository). If the form is unavailable, ask a maintainer for a private channel without posting the sensitive details.
 
-Include the affected revision, a synthetic reproduction, expected boundary, and impact. Share the minimum evidence needed. Do not upload raw logs merely because an artifact is marked private. Maintainers should acknowledge and coordinate remediation privately before public disclosure; no response-time SLA is promised.
+Include the affected revision, a synthetic reproduction, expected boundary, and impact. Share the minimum evidence needed. Do not upload raw logs merely because an artifact is marked private. Remediation is coordinated privately before public disclosure.
+
+## Response times
+
+This project is maintained by one person, so these are best-effort targets, not a contractual SLA:
+
+- Acknowledgement within **5 business days**.
+- Initial assessment (severity, scope and next step) within **14 days**.
+
+If you get no acknowledgement within that window, post a public issue that only asks for contact and contains no vulnerability details.
 
 ## Intended boundary
 

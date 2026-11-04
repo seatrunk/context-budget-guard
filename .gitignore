@@ -13,3 +13,7 @@ __pycache__/
 benchmark-fixtures/
 .benchmark-runs/
 .DS_Store
+
+# Saída do context-budget-guard (pode conter dados sensíveis)
+artifacts/
+context-budget-guard/
