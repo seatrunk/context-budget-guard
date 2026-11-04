@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "kind": "sanitized-documentation-only-review-handoff",
+  "snapshotUpToUTC": "2026-11-04T02:25:36.541577+00:00",
+  "status": "BLOCKED_NOT_READY",
+  "publicationScope": "Documentation only; rejected source, patches, probes and private logs are not distributed by this handoff.",
+  "nativeBase": "bf0203a794a07aac3ff764972ab9087baa4e4f4e",
+  "scopedCheckpoints": [
+    {
+      "issue": 6,
+      "tree": "f8183457faa4ba8404ebef5aa07d02bcbd5bde03",
+      "scope": "individual issue only",
+      "verdict": "APPROVE",
+      "shipped": false
+    },
+    {
+      "issue": 7,
+      "tree": "219341fb26c4a262afb2e6c145e6194974048352",
+      "scope": "individual issue only",
+      "verdict": "APPROVE",
+      "shipped": false
+    },
+    {
+      "issue": 8,
+      "tree": "7399d18b675b621c216fceb624ac3e5c9becea6e",
+      "scope": "individual issue only",
+      "verdict": "APPROVE",
+      "shipped": false
+    },
+    {
+      "issue": 9,
+      "tree": "089e068a528b6f018ed9c3356ec9e11c9d75f139",
+      "scope": "individual issue only",
+      "verdict": "APPROVE",
+      "shipped": false
+    }
+  ],
+  "nativeComposite": {
+    "tree": "e35b5b0fd06cdaaa36bf5ac5adfa24b757f4be84",
+    "fullPatchSha256": "a154f4438caece252141b4a1698abb7a2e0800139e8e9ae41e6fca3f372685f2",
+    "integrationDeltaSha256": "557beb0a42440d138f5b11443ca099fc87382d3e039f32a15aa1977ce8529442",
+    "candidateManifestSha256": "351816cb19ffe78d6f1ead1abcba2934af9e11b61301acb8110dab212184ca06",
+    "changedPaths": 38,
+    "fullGate": {
+      "failed": 13,
+      "files": 30,
+      "passed": 649,
+      "skipped": 1
+    },
+    "stagedChecksPassed": 12,
+    "independentCompositeReviewPerformed": false,
+    "parentTargetedReproduction": {
+      "passed": 1,
+      "failed": 7,
+      "files": 2,
+      "skipped": 0
+    },
+    "blockers": [
+      {
+        "cases": 2,
+        "id": "B1",
+        "kind": "product acceptance",
+        "summary": "Original #7 rotated-session rows retain 21407/21823 bytes; new #9 owner eligibility excludes old owned note."
+      },
+      {
+        "cases": 1,
+        "id": "B2",
+        "kind": "product acceptance",
+        "summary": "Unavailable-policy control-heavy multimodal presentation becomes marker but owned suffix still names 3043-byte original; rendered original is 18073 bytes."
+      },
+      {
+        "cases": 4,
+        "id": "B3",
+        "kind": "product acceptance",
+        "summary": "Persistent policy/aggregate failure on SECOND settlement loses previously delivered notice after owner retirement."
+      },
+      {
+        "cases": 6,
+        "id": "P1",
+        "kind": "unsupported/unverified result-type probe",
+        "summary": "Synthetic native read_file dict/media result reaches existing string hash .encode and fails before budget commit. No new result API or guardrail bypass added."
+      }
+    ],
+    "repairRoundsUsed": 0,
+    "maxReviewDrivenRepairRounds": 2
+  },
+  "deliverySupport": {
+    "tree": "5a7ecb87ee81925f767430f300bc878fea6f0247",
+    "patchSha256": "e79ff0b00a25507cc5462f14f1729fa6dc82ef1666edc8607944e8d215d2958e",
+    "verdict": "REJECT",
+    "verdictScope": "delivery support only",
+    "verdictSha256": "2b583cd53e41cc7aecb5ae95bd1439b79a399b34e515694b363933130d3e669a",
+    "sourcePaths": [
+      ".github/workflows/ci.yml",
+      "README.md",
+      "docs/runtime-delivery.md",
+      "scripts/check_repo.py",
+      "scripts/runtime_delivery.py",
+      "tests/test_runtime_delivery.py"
+    ],
+    "sourceSha256": {
+      ".github/workflows/ci.yml": "181d2a2730ce7b11e33aec5fc8740a87e5e3a919aff59a3cdf9c93d4bf7a4841",
+      "README.md": "e43c79038f2bdcf0e133e04dcfbed8a9661df1b9bc6b9e774d303dbd9b9737e4",
+      "docs/runtime-delivery.md": "c2670549efc189301c253fce29fe68b3afa2c7610393bc80ea7a462f73d7d67b",
+      "scripts/check_repo.py": "998a6e459ca58b9631b99af67ec3ada70c1dfdf0c6a7a2bb9bbe99fd93237f6b",
+      "scripts/runtime_delivery.py": "c7c048ec1eeacabd88045639a5f2d6598247aec841c178a2e56886bb54823844",
+      "tests/test_runtime_delivery.py": "d9739dba7169ce83c48373785f26b6e3d74664825e269601bb8b4ce33e3f161e"
+    },
+    "publicUnitTestsPassed": 37,
+    "deliveryUnitTestsIncluded": 23,
+    "independentObservationControlTestsPassed": 18,
+    "integrityAssertionsFailed": 2,
+    "nativeCIExecuted": false,
+    "pmProvisioningExecuted": false,
+    "findings": [
+      {
+        "id": "DS-1",
+        "severity": "medium",
+        "blocking": true,
+        "title": "Untracked importable source is accepted and can spoof managed pytest preflight",
+        "candidateRelativeLocations": [
+          "scripts/runtime_delivery.py:193-215",
+          "scripts/runtime_delivery.py:229-238"
+        ],
+        "classification": "functional candidate-identity/preflight contract; not an OS same-UID boundary violation"
+      },
+      {
+        "id": "DS-2",
+        "severity": "medium",
+        "blocking": true,
+        "title": "skip-worktree hides modified inherited tracked source from verifier",
+        "candidateRelativeLocations": [
+          "scripts/runtime_delivery.py:207-214"
+        ],
+        "classification": "functional tracked-byte integrity; requires local index flag mutation, not sandbox escape"
+      }
+    ]
+  },
+  "evidenceChecks": {
+    "nativeSourceAndExportHashesVerified": 38,
+    "frozenSourceAndEvidenceHashesVerified": 101,
+    "nativeGateLogReceiptPairsVerified": 7,
+    "deliverySourceHashesVerified": 6,
+    "deliveryReviewArtifactHashesVerified": 23,
+    "hashConsistencyIsNotSemanticApproval": true
+  },
+  "limits": [
+    "All test counts are attributed observations; worker, parent, reviewer and subset runs overlap and must not be added.",
+    "37 tests describe the separate rejected delivery-support worktree, not the documentation-only public branch.",
+    "Fingerprints identify retained local snapshots, not fetchable objects or available source packages in this repository.",
+    "Native code, complete reproductions, raw logs, profiles and transcripts are not included.",
+    "Six media-result probes fail before budget commit; they do not establish supported budget behavior or a newly introduced budget defect.",
+    "No new ownership/delivery contract has been selected; no repair round has started.",
+    "No actual public-pin runtime materialization, delivery-path PM provisioning, native CI, composite approval, final payload privacy review, installation or activation.",
+    "No measured savings or newly executed paired benchmark.",
+    "No OS/same-UID security boundary is claimed."
+  ],
+  "reviewRequest": [
+    "Propose bounded reconciliation of B1-B3 without weakening byte, ownership, privacy, receipt, control/media, aggregate or cached-prefix contracts.",
+    "Propose DS-1/DS-2 verifier corrections and an explicit generated-artifact/preflight integrity contract.",
+    "Validate whether P1 uses a supported real adapter/result shape before proposing unrelated native result-type API expansion.",
+    "Identify required source/probe exports if reviewing remotely; this document is not a standalone reproduction package."
+  ]
+}
