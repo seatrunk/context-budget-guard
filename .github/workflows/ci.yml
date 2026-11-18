@@ -46,15 +46,22 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: ${{ matrix.python }}
-      - name: Unit, invariant and adapter tests
-        run: python -m unittest discover -s tests
-      - name: Package install smoke test (wheel contains only the spillway package)
+      # Repository policy allows only actions/checkout, so use the interpreter preinstalled
+      # in the hosted runner's tool cache instead of actions/setup-python.
+      - name: Tests and package install smoke test (wheel contains only the spillway package)
+        env:
+          PY_VERSION: ${{ matrix.python }}
         run: |
           set -eu
-          python -m venv "$RUNNER_TEMP/venv"
+          py=$(ls -d "$RUNNER_TOOL_CACHE/Python/$PY_VERSION".*/x64/bin/python3 2>/dev/null | sort -V | tail -n 1 || true)
+          if [ -z "$py" ]; then
+            echo "::error::Python $PY_VERSION is not in the runner tool cache"
+            ls "$RUNNER_TOOL_CACHE/Python" || true
+            exit 1
+          fi
+          "$py" --version
+          "$py" -m unittest discover -s tests
+          "$py" -m venv "$RUNNER_TEMP/venv"
           "$RUNNER_TEMP/venv/bin/pip" install --quiet .
           "$RUNNER_TEMP/venv/bin/spillway" --version
           site=$("$RUNNER_TEMP/venv/bin/python" -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')
