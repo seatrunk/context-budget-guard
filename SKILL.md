@@ -1,7 +1,7 @@
 ---
-name: context-budget-guard
+name: spillway
 description: "Use when reviewing output-budget evidence or rollout gates."
-version: 0.3.0
+version: 0.4.0
 author: Ricardo Margalho (seatrunk), Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -11,7 +11,7 @@ metadata:
     related_skills: []
 ---
 
-# Context budget guard operating procedure
+# Spillway operating procedure
 
 Use this skill to review proposed output budgeting and reproduce repository checks. It is an operating procedure, not runtime enforcement: loading it changes no configuration. The optional Hermes installer lives in `adapters/hermes/` and must be run explicitly.
 
@@ -25,11 +25,12 @@ Use this skill to review proposed output budgeting and reproduce repository chec
 
 Read [project status](docs/project-status.md) and [design](docs/design.md) with `read_file`. Use Python 3.11+ from the repository root. No dependency installation, credentials, or live profile access is required.
 
-## Executable core (0.3.0)
+## Executable core (0.4.0)
 
 - Tests and invariants: `python3 -m unittest discover -s tests -v`.
 - Offline replay: `python3 benchmarks/replay/replay.py` (0 model calls; exits 1 if the candidate fails an oracle).
-- Hermes: [adapters/hermes/README.md](adapters/hermes/README.md). Start with `CBG_MODE=shadow` and read `receipts.jsonl` before any `enforce`.
+- Hermes: [adapters/hermes/README.md](adapters/hermes/README.md). MCP: [adapters/mcp_proxy/README.md](adapters/mcp_proxy/README.md). Start with `SPILLWAY_MODE=shadow` (the default), summarize `receipts.jsonl` with `spillway stats`, and review before any `enforce`.
+- Repository checks: `python3 scripts/check_repo.py` (also enforces version consistency).
 
 ## Procedure
 

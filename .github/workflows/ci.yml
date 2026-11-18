@@ -26,13 +26,43 @@ jobs:
       - name: Repository contracts and public-data hygiene
         run: python3 scripts/check_repo.py
       - name: Minimal lint (compileall)
-        run: python3 -m compileall -q cbg adapters benchmarks scripts tests
+        run: python3 -m compileall -q spillway adapters benchmarks scripts tests
       - name: Core, adapters, invariants and tooling
         run: python3 -m unittest discover -s tests -v
       - name: Offline replay (no model, no network)
         run: |
           python3 benchmarks/replay/replay.py --out "$RUNNER_TEMP/offline-replay.json"
           cmp "$RUNNER_TEMP/offline-replay.json" benchmarks/replay/results/offline-replay.json
+
+  python-compat:
+    name: python-compat (${{ matrix.python }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Unit, invariant and adapter tests
+        run: python -m unittest discover -s tests
+      - name: Package install smoke test (wheel contains only the spillway package)
+        run: |
+          set -eu
+          python -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet .
+          "$RUNNER_TEMP/venv/bin/spillway" --version
+          site=$("$RUNNER_TEMP/venv/bin/python" -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')
+          test ! -e "$site/adapters"
+          printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
+            | (cd "$RUNNER_TEMP" && "$RUNNER_TEMP/venv/bin/spillway" mcp --mode enforce --log-dir "$RUNNER_TEMP/spw" -- \
+                 "$RUNNER_TEMP/venv/bin/python" "$GITHUB_WORKSPACE/tests/adapters/fake_mcp_server.py") \
+            | grep -q spillway_read_artifact
 
   gitleaks:
     name: gitleaks

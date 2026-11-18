@@ -1,6 +1,6 @@
 # Security policy
 
-This repository ships the pure `cbg/` core, a Hermes plugin, an MCP stdio proxy, documentation and benchmark tooling. It does not ship the separate native runtime prototype. No supported runtime release or security audit is claimed. A passing test suite does not establish a security guarantee.
+This repository ships the Spillway package (`spillway/`: pure budgeting core, artifact store, MCP stdio proxy and CLI), a Hermes plugin, documentation and benchmark tooling. It does not ship the separate native runtime prototype. No supported runtime release or security audit is claimed. A passing test suite does not establish a security guarantee.
 
 ## Report privately
 
@@ -19,6 +19,6 @@ If you get no acknowledgement within that window, post a public issue that only 
 
 ## Intended boundary
 
-The proposed guard reduces model-visible tool text. It is not a sandbox, a total token/money cap, or protection against an attacker running under the same operating-system UID. Artifact access control and redaction still need independent verification. “Private” is a requirement, not proof of confidentiality.
+Spillway reduces model-visible tool text. It is not a sandbox, a total token/money cap, or protection against an attacker running under the same operating-system UID. In `enforce` mode it stores complete, **unredacted** originals in `artifacts/` (0600 files, 0700 directories, `O_NOFOLLOW`, bounded retention); it performs no redaction, and its access control has not been independently audited. “Private” is a requirement, not proof of confidentiality.
 
 The [known correctness blocker](docs/project-status.md) is not a claim of a security finding. Report any distinct security issue privately. See [design](docs/design.md) and [rollout](docs/rollout.md) for proposed safeguards.

@@ -1,252 +1,247 @@
-# Context Budget Guard
+# Spillway
 
-![Less noise. Keep the clues. A tool-result stack preserves its failure diagnostic and a path to recover detail. Experimental operating skill and benchmark kit; native runtime not shipped; activation blocked.](docs/assets/hero.svg)
+![Spillway — less noise, keep the clues. A large tool result becomes a bounded preview with preserved diagnostics and a recoverable artifact.](docs/assets/hero.svg)
 
 [![CI](https://github.com/seatrunk/context-budget-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/seatrunk/context-budget-guard/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
+![Dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen.svg)
 
-**[The idea](#the-idea) · [How it should work](#how-it-should-work) · [The plan](#the-plan) · [Evaluation](#how-we-plan-to-evaluate-it) · [Try the toolkit](#try-the-toolkit)**
+**Spillway caps oversized tool output for LLM agents without losing the clue that matters.** A compiler dump, a 5,000-line log or a giant JSON response is turned into a bounded preview. The exit code, error locations and runtime notes are kept, and the complete original is saved privately so the agent can read it back page by page.
 
-> **Experimental · production activation BLOCKED.** Since Stage 1 (PR #14) this repository ships a pure, dependency-free core (`cbg/`), a Hermes plugin and an MCP stdio proxy that default to `shadow`, and an offline replay where the candidate passes 39/39 oracles. See [Core and adapters](#core-and-adapters-v030). The private native patch is still not shipped: its combined local candidate **failed acceptance** and separate delivery-support code was **REJECTED**, as recorded in the [November 4 assessment](docs/reviews/2026-11-04-combined-assessment.md). Still pending: the Stage 2 native gate, a real-task benchmark and independent review. The graphics explain the design, not measured savings.
+Think of a dam spillway. Normal flow passes untouched. During a surge the crest height is enforced, and the overflow is diverted to a basin instead of breaking things downstream.
 
-## The idea
+> **Status: experimental (v0.4.0).** The core, the MCP proxy and the Hermes plugin work, are tested, and default to **`shadow`**: they measure and log, and the model sees the original output. **`enforce` is not production-approved.** See [rollout gates](docs/rollout.md) and [project status](docs/project-status.md). Previously named *Context Budget Guard* (`cbg`); see [migration](#migrating-from-context-budget-guard).
 
-An agent can drown in tool output: a compiler dump, a long file, a giant JSON response. The important part may be just one exit code, one source location, or a short runtime notice.
+**[Why](#why) · [What the model sees](#what-the-model-sees) · [Quick start](#quick-start) · [Configuration](#configuration) · [Recovery](#recovering-spilled-output) · [How it works](#how-it-works) · [Evidence](#evidence) · [Security](#security-and-privacy) · [Development](#development)**
 
-**The goal is not to delete more text. It is to keep the information the next decision needs—and make the rest recoverable.**
+---
 
-| Keep in view | Keep recoverable | Never trade away |
+## Why
+
+Simple truncation helps you hit a size target, but it often cuts the wrong part: the exit code at the end, the `src/lib.rs:12` in the middle, or the plugin note that was attached after the cut. Spillway keeps fidelity first and makes size the second goal:
+
+| Always kept in view | Kept recoverable | Never traded away |
 | --- | --- | --- |
-| Useful preview, failure status, necessary notices | Additional detail in a private/redacted artifact | Trust boundaries, valid media, mandatory controls, approved read semantics |
+| Head and tail preview, `exit_code`, up to 5 `file:line` locations (or short `ERROR`/`panic` clues), call-owned notes | Full unredacted original in `artifacts/<sha256>.txt` (0600), read by offset/limit | One genuine `<untrusted_tool_result>` wrapper, media order, mandatory control content, approved-read receipts |
 
-The [operating skill](SKILL.md) describes how to review that behavior. The runtime would enforce it. **Loading a skill is not installing a guard.** Conversation-summary compaction is another layer, not a different name for this tool-output policy.
+It is **not** conversation summarization, a token or cost cap, or a sandbox. It bounds individual tool results and tool-result batches.
 
-## How it should work
+## What the model sees
 
-![Design target: tool data passes through per-result and aggregate budgeting into a model-visible preview. Additional detail goes to a private/redacted artifact. A trusted runtime notice remains exactly once outside the genuine untrusted wrapper, and targeted reads recover extra detail.](docs/assets/output-flow.svg)
+A 29,490-byte `cargo build` failure capped at 640 bytes (the default cap is 16,384):
 
-### One output, two destinations
-
-1. **For the model:** a useful bounded preview, original error/exit semantics, valid media and any necessary notice.
-2. **For recovery:** additional output in a private/redacted artifact, read with targeted `offset` / `limit` when the task actually needs it.
-3. **Across both:** track notice ownership by call ID, reserve its complete rendered footprint before spilling, and never restore an unbounded note after the final cap.
-
-A note sitting in a file is not the same as a note the model received. A small preview is not successful if it hides the reason a command failed.
-
-### The proposed defaults
-
-| Surface | Intended ordinary limit | Important boundary |
-| --- | --- | --- |
-| Complete file selection | 350 effective LF lines **and** 16,384 formatted UTF-8 bytes | Both limits apply; define empty/trailing-line behavior |
-| Partial file selection | 150 effective LF lines **and** 16,384 formatted UTF-8 bytes | Paginate instead of silently presenting an incomplete read as complete |
-| Final ordinary tool text | 16,384 UTF-8 bytes | Count the final representation, including framing and escaped metadata |
-| Inline notice bundles | Up to 4,096 bytes per bundle; 8,192 per batch | Active policy/tiny-budget decisions still apply; archive or use a bounded marker |
-
-Mandatory controls and valid one-use read receipts retain their defined exceptions. Aggregate turn accounting is separate from per-result bytes; irreducible-overhead reporting must not become a byte-limit escape hatch. None of these proposed limits is a total token, money, filesystem or same-UID security boundary. See the [full design](docs/design.md).
-
-## The plan
-
-![Six-stage promotion roadmap: define invariants is documented; the isolated build and review is rejected; repair and re-review is next; multi-code replay is proposed; real-task and compaction evaluation is not run; controlled rollout is locked. Offline characterization may expose failures earlier but cannot override a failing oracle.](docs/assets/roadmap.svg)
-
-**Status after Stage 1:** the published core closes B1–B3 and the core parts of #1 and #3–#9 in its own tests and offline replay. The native runtime is a separate matter: its Stage 2 combined gate, a real-task benchmark and independent review are still pending, so this is not “ship it.”
-
-### Historical record: native combined assessment (November 4, before Stage 1)
-
-Individual repairs for [#6](https://github.com/seatrunk/context-budget-guard/issues/6), [#7](https://github.com/seatrunk/context-budget-guard/issues/7), [#8](https://github.com/seatrunk/context-budget-guard/issues/8) and [#9](https://github.com/seatrunk/context-budget-guard/issues/9) reached scoped independent approvals, then the **combined gate failed: 649 passed, 13 failed, one existing Windows-only skip**. These are local runtime observations, not public CI results or proof of a shipped fix.
-
-| Native blocker (recorded) | Observed result | Addressed in the published core by |
-| --- | --- | --- |
-| Session rotation | Two approved-read rows remain above 16,384 bytes | `test_B1_*` (re-measured final render; rotated-session receipt rejected) |
-| Fallback ownership | A bounded media marker disagrees with the owned original suffix | `test_B2_*` (owner bound to the rendered SHA-256) |
-| Persistent failure | Four SECOND-settlement cases lose a notice | `test_B3_*` (retirement only after the last settlement) |
-| Delivery-support integrity | Independent review rejected two verifier gaps despite 37 existing tests passing | Not addressed: native delivery support is not published |
-
-Six additional synthetic read/media probes fail before budget commit at an existing result-type guardrail; they are separately unsupported/unverified, not established new budget regressions. The parent independently reproduced all seven product-acceptance failures. The delivery-support implementation and its tests remain separate and are **not shipped on this documentation branch**.
-
-Read the [latest findings and reviewer brief](docs/reviews/2026-11-04-combined-assessment.md), [sanitized evidence JSON](docs/reviews/2026-11-04-combined-assessment.json), and [current status](docs/project-status.md). The [earlier protected-note rejection](docs/reviews/2026-11-03-protected-notes.md) remains historical evidence. Native patches, full probes and the rejected support code are not distributed here; fingerprints are local snapshot identifiers, not a self-contained reproduction package. Issues remain open until the native gate and independent review pass; production activation remains blocked.
-
-## How we plan to evaluate it
-
-![Proposed evaluation: synthetic Python, TypeScript/JavaScript, Rust and SQL/config/log workloads enter paired unbudgeted, historical-spill and candidate-runtime arms. Independent correctness oracles veto broken results before bytes, recovery calls, latency or available token/cost data are compared. Protocol only; no benchmark scores are shown.](docs/assets/evaluation.svg)
-
-### Fidelity first. Efficiency second.
-
-- **Same workload, different arms:** freeze the inputs, call order, budgets and runtime fingerprints. Compare an unbudgeted reference, historical spilling and the actual isolated candidate—not a toy replacement.
-- **Check what survives:** diagnostic facts, note placement, failure status, media order, receipt lifetime, artifact recovery and no repeated tool execution.
-- **Then measure the whole cost:** output bytes, recovery/tool calls, timing, and actual provider/tokenizer usage when available. Count retries and follow-up reads; report unknown costs as unknown.
-- **Only later, with separate approval:** real coding tasks and tests, followed by deliberate conversation-compaction interaction experiments. A benchmark cannot authorize production activation.
-
-The [evaluation protocol](docs/multi-codebase-evaluation.md) is published; the replay harness and execution are **not implemented** by that document. [#11](https://github.com/seatrunk/context-budget-guard/issues/11) tracks the actual benchmark work.
-
-The historical [November 2 baseline](benchmarks/results/2026-11-02-off-baseline.json) remains **guard off, one observation per case**. There is no published on-mode comparison, measured savings, or verified live-backend enforcement. The [benchmark guide](docs/benchmarking.md) explains the evidence limits.
-
-## Core and adapters (v0.3.0)
-
-Since Stage 1 the repo publishes the pure core, with no I/O and no dependencies (Python 3.11+ stdlib):
-
-| Path | What it is |
-| --- | --- |
-| [`cbg/`](cbg/) | `limits` (effective LF lines, UTF-8 cut), `render` (final bytes with framing, multimodal JSON escaping and note suffix), `notes` (ownership by call ID), `sanitize` (delimiters), `facts` (exit code and `file:line`), `budget` (limiter and batch) and `verify` (independent receipt verifier) |
-| [`adapters/hermes/`](adapters/hermes/README.md) | Hermes Agent plugin via the `transform_tool_result` hook |
-| [`adapters/mcp_proxy/`](adapters/mcp_proxy/README.md) | MCP stdio proxy |
-| [`benchmarks/replay/`](benchmarks/replay/README.md) | offline replay with three arms and fidelity oracles |
-| [`docs/model/notes.md`](docs/model/notes.md) | note state machine |
-
-The verifier rereads the final output and, if the receipt does not match, delivers a bounded marker (fail closed). The private native patch stays outside the repo. Production activation remains blocked by the [rollout](docs/rollout.md).
-
-### Installing in Hermes
-
-```sh
-sh adapters/hermes/install.sh
+```text
+<untrusted_tool_result>
+[spillway preview] original 29490 bytes, 1104 lines; exit_code=101; errors: src/lib.rs:12; artifact sha256=8813b5fa…3101 (read with offset/limit)
+   Compiling crate000 v0.1.0
+   Compiling crate001 v0.1.0
+   …
+[...]
+note: detail 198
+note: detail 199
+error: could not compile `demo`
+exit code: 101
+</untrusted_tool_result>
 ```
 
-The script copies `adapters/hermes/context_budget_guard/__init__.py` and `plugin.yaml` to `${HERMES_HOME:-~/.hermes}/plugins/context-budget-guard/`, and the whole `cbg/` core to `vendor/cbg` inside that directory, deleting `__pycache__`. It activates nothing: Hermes only loads plugins listed in `plugins.enabled`.
+(The real header carries the full 64-character SHA-256; it is shortened here.)
 
-### Turning it on and off
+- The **header** is built from the full output, so the facts survive whatever is cut.
+- The **head and tail** are cut on UTF-8 and line boundaries. Line-limited reads get only a head, and it gets the whole byte budget.
+- Text inside the result that imitates `[spillway …]`, `[note:…]` or the wrapper tags is neutralized, so tool output cannot forge a header.
+- Results that fit pass through unchanged (`mode: full`).
 
-```sh
-hermes plugins enable context-budget-guard     # or plugins.enabled: [context-budget-guard] in ~/.hermes/config.yaml
-# restart Hermes: the gateway discovers plugins once per process
-hermes plugins disable context-budget-guard    # turns it off; restart again
-```
+## Quick start
 
-To remove it for good: delete `~/.hermes/plugins/context-budget-guard`.
-
-### Modes and variables (Hermes adapter)
-
-| Variable | Default | Effect |
-| --- | --- | --- |
-| `CBG_MODE` | `shadow` | `shadow` (observation): measures and writes a receipt; the model receives the original. `enforce`: replaces results above the cap with the preview and writes the original to `artifacts/`. `off`: does nothing and writes nothing. An invalid value becomes `shadow` |
-| `CBG_LOG_DIR` | `$HERMES_HOME/context-budget-guard` (or `~/.hermes/context-budget-guard`) | directory for `receipts.jsonl`, `errors.jsonl` and `artifacts/` |
-| `CBG_RESULT_CAP` | `16384` | cap in UTF-8 bytes |
-| `CBG_FRAMING_RESERVE` | `512` | bytes subtracted from the cap for the `untrusted_tool_result` wrapper that Hermes applies afterwards; the core uses `max(256, CBG_RESULT_CAP - CBG_FRAMING_RESERVE)` |
-
-An internal plugin error is fail-open: the original result goes through and `errors.jsonl` receives `{"tool", "error"}` (only the exception name).
-
-### MCP proxy
+Requires Python 3.11+ and nothing else.
 
 ```sh
-python3 adapters/mcp_proxy/proxy.py [--mode shadow|enforce|off] [--log-dir DIR] [--cap N] -- <real server command> [args]
+git clone https://github.com/seatrunk/context-budget-guard spillway && cd spillway
+pip install .            # or: pipx install .   — provides the `spillway` command
+spillway --version
 ```
 
-In the MCP client, replace the server command with that line. The real server runs as a child process. Every message passes unchanged, except responses to `tools/call`. Defaults: `--mode` comes from `CBG_MODE` (otherwise `shadow`), `--log-dir` from `CBG_LOG_DIR` (otherwise `~/.cache/context-budget-guard`), `--cap` from `CBG_RESULT_CAP` (otherwise `16384`, with no framing reserve). In `shadow` the response is byte-for-byte identical. In `enforce`, a response above the cap becomes a preview, `isError` and media are kept, the original goes to `artifacts/` and `structuredContent` is removed (it would bypass the cap). `off` passes everything through and writes no receipt.
+Or install straight from Git: `pipx install git+https://github.com/seatrunk/context-budget-guard`. Spillway is not published on PyPI.
 
-### Warning: `artifacts/` holds the complete output
+### 1. Wrap any MCP server
 
-With `CBG_MODE=enforce` (Hermes) or `--mode enforce` (MCP proxy), `artifacts/<sha256>.txt` holds the **complete, unredacted** output of every cut tool result. It can contain secrets (tokens, keys, `.env` files read by the agent), PII and private code. The guard redacts nothing.
+Put `spillway mcp` in front of the server command in your MCP client configuration:
 
-- The adapter creates directories with 0700 and files with 0600. That only protects against other users on the system, not against processes running under the same UID.
-- Do not commit or share `artifacts/`, `receipts.jsonl` or `errors.jsonl`. The repo `.gitignore` already ignores `artifacts/` and `*.jsonl`, but the default `CBG_LOG_DIR` lives outside the repo on purpose; do not point that directory inside a repository.
-- Cleanup: `rm -rf ~/.hermes/context-budget-guard/artifacts` (Hermes) or `rm -rf ~/.cache/context-budget-guard/artifacts` (proxy), or the `CBG_LOG_DIR` you configured. Receipts hold no content, but they do hold tool names and error locations (`file:line`); delete `receipts.jsonl` too if that is sensitive.
-- In `shadow` no artifact is written.
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "spillway",
+      "args": ["mcp", "--mode", "shadow", "--", "npx", "-y", "@modelcontextprotocol/server-filesystem", "."]
+    }
+  }
+}
+```
 
-`install.sh` refuses an empty destination, or one that does not end in `/plugins/context-budget-guard` (it accepts `CBG_INSTALL_DEST` for tests), before any `rm -rf`.
+- **`shadow`** (the default): every response passes through byte for byte. One content-free receipt per `tools/call` is appended to `~/.cache/spillway/receipts.jsonl`.
+- **`enforce`**: oversized `tools/call` results become previews. `isError` and media are kept, and `structuredContent` is dropped from cut responses because it would bypass the cap. The original is saved under `artifacts/`, and a `spillway_read_artifact` tool is added to `tools/list` for recovery.
+- **`off`**: plain passthrough. No files are written.
 
-### Receipts
+Without installing: `python3 adapters/mcp_proxy/proxy.py [options] -- <server command>`.
 
-One JSON line per tool result in `receipts.jsonl`. It contains no result content. In `enforce`, `artifacts/<artifact_sha256>.txt` holds the complete original (files 0600, directories 0700).
-
-Core fields (`cbg/budget.py`, `apply_budget`):
-
-| Field | Meaning |
-| --- | --- |
-| `call_id` | tool call ID (in the proxy, `mcp-<JSON-RPC id>`) |
-| `mode` | `full` (fit entirely), `preview` (head and tail with a facts header), `marker` (header only), `withheld` (policy or aggregate failure), `failclosed` (verifier rejected), `control` (mandatory control, no cap) |
-| `kind` | `text` or `multimodal` |
-| `cap` | cap applied in bytes (`null` for control) |
-| `rendered_bytes` / `rendered_sha256` | size and hash of the measured final render |
-| `original_bytes` / `original_lines` | size in UTF-8 bytes and effective LF lines of the original |
-| `exit_code` | detected exit code (`null` if none) |
-| `error_locations` | up to 5 extracted `file:line` locations |
-| `notes_shown` / `notes_marked` | IDs of notes that are visible / represented only by a marker (empty in the Hermes adapter) |
-| `media_parts` | number of preserved media parts |
-| `artifact_sha256` / `artifact_bytes` | hash and size of the original |
-| `receipt_used` | whether an approved-read receipt (#7) was applied |
-| `verified` | the verifier accepted the final render |
-| `violations_before_failclose` | violations found before failing closed (empty list in the normal case) |
-| `policy_error`, `aggregate_bytes`, `aggregate_unsatisfiable` | only in `finalize_batch` (batch); they do not appear in the adapters |
-
-Fields added by the Hermes adapter: `ts`, `tool`, `session_id`, `adapter` (`hermes`), `adapter_mode`, `elapsed_us`, `would_change` (the mode is neither `full` nor `control`, so enforce would change the result). By the proxy: `ts`, `tool`, `adapter` (`mcp_proxy`), `adapter_mode`, `is_error`, `would_change`. In `enforce` the proxy also writes a `{"call_id", "structured_content_dropped": true}` line when it removes `structuredContent`.
-
-### Known risks and limits
-
-- The private native patch has not been proven. B1–B3 are closed in the published core, not in the private runtime; the native combined gate is still pending.
-- The public Hermes hook only sees text results. Multimodal passes unchanged, and the runtime's plugin/LSP notes do not reach the hook.
-- We reserve 512 bytes for the Hermes wrapper. In `enforce` the receipt measures our render, not the final text assembled by Hermes.
-- The offline replay is synthetic: it does not measure tokens or cost, and the historical-spill arm is an emulation, not the old runtime.
-
-### Real-task benchmark plan
-
-1. Observation (`CBG_MODE=shadow`, one week or a fixed batch of tasks). Measure: bytes before and after (`original_bytes` and `rendered_bytes`), how many results would exceed the cap (`would_change`), oracle violations (`verified=false`, `mode=failclosed`, non-empty `violations_before_failclose`) and latency (`elapsed_us`, Hermes only).
-2. Enforce: the same tasks, in A/B pairs (same prompt, repository at the same commit, same model; one arm `shadow`, the other `enforce`, alternating order). Compare task success (tests pass, criterion defined beforehand), tokens and cost from the invoice or provider logs, recovery reads in `artifacts/`, and fidelity regressions (the model lost the exit code, error location or note). At least 5 pairs per task; report median and IQR.
-
-Aggregation with jq:
+### 2. Hermes Agent plugin
 
 ```sh
-R=~/.hermes/context-budget-guard/receipts.jsonl
-jq -s 'map(select(.mode)) | {total: length, would_exceed_cap: map(select(.would_change)) | length,
-        bytes_before: (map(.original_bytes) | add), bytes_after: (map(.rendered_bytes) | add),
-        not_verified: map(select(.verified == false or .mode == "failclosed")) | length,
-        by_mode: (group_by(.mode) | map({(.[0].mode): length}) | add)}' "$R"
-jq -s 'map(.elapsed_us // empty) | sort | {n: length, p50: .[length/2|floor], p95: .[length*0.95|floor], max: .[-1]}' "$R"
-jq -r 'select(.would_change) | [.tool, .original_bytes, .rendered_bytes] | @tsv' "$R" | sort | uniq -c | sort -rn | head
+sh adapters/hermes/install.sh      # copies the plugin and core to ${HERMES_HOME:-~/.hermes}/plugins/spillway
+hermes plugins enable spillway     # then restart Hermes (plugins are discovered once per process)
 ```
 
-The same with Python stdlib only:
+The plugin uses Hermes's public `transform_tool_result` hook and does not modify Hermes. It is `shadow` by default; set `SPILLWAY_MODE=enforce` in the Hermes environment to cut output. To turn it off, run `hermes plugins disable spillway` or set `SPILLWAY_MODE=off`. Details: [adapters/hermes/README.md](adapters/hermes/README.md).
+
+### 3. Library
+
+```python
+import spillway
+
+out = spillway.apply_budget("call-1", huge_text, exit_code=2)
+out.mode                       # "full" | "preview" | "marker" | "withheld" | "failclosed" | "control"
+out.rendered.model_text()      # exactly what the model would see (≤ cap bytes)
+out.receipt                    # content-free, verified receipt (sizes, hashes, facts)
+out.artifact                   # full original when cut (persist it yourself, e.g. ArtifactStore)
+
+# A batch with a turn budget: small rows keep their size, big rows shrink first.
+outs = spillway.finalize_batch(
+    [{"call_id": "a", "result": log_a}, {"call_id": "b", "result": log_b}],
+    turn_budget=24_000,
+)
+```
+
+The budgeting core (`limits`, `render`, `notes`, `sanitize`, `facts`, `budget`, `verify`) does no I/O. All filesystem access lives in [`spillway/artifacts.py`](spillway/artifacts.py).
+
+## Configuration
+
+| Environment variable | CLI flag (`spillway mcp`) | Default | Meaning |
+| --- | --- | --- | --- |
+| `SPILLWAY_MODE` | `--mode` | `shadow` | `off`, `shadow` or `enforce`. An invalid value falls back to `shadow` (Hermes) |
+| `SPILLWAY_LOG_DIR` | `--log-dir` | `~/.cache/spillway` (MCP), `$HERMES_HOME/spillway` (Hermes) | Holds `receipts.jsonl`, `errors.jsonl` and `artifacts/` |
+| `SPILLWAY_RESULT_CAP` | `--cap` | `16384` | Per-result cap in UTF-8 bytes; the floor is 256 |
+| `SPILLWAY_FRAMING_RESERVE` | — | `512` | Hermes only: bytes left for the wrapper Hermes adds afterwards |
+| `SPILLWAY_WRAP_UNTRUSTED` | `--wrap-untrusted` | off | MCP only: keep the `<untrusted_tool_result>` wrapper in the enforced text |
+| `SPILLWAY_MAX_ARTIFACTS` | `--max-artifacts` | `200` | Retention: maximum number of artifact files (oldest are evicted first) |
+| `SPILLWAY_MAX_ARTIFACT_BYTES` | `--max-artifact-bytes` | `104857600` | Retention: maximum total artifact bytes |
+
+The legacy `CBG_MODE`, `CBG_LOG_DIR`, `CBG_RESULT_CAP`, `CBG_FRAMING_RESERVE` are still read when the matching `SPILLWAY_*` variable is unset or empty.
+
+Core defaults (`spillway.Policy`): 16,384 bytes per result; 350 lines for full file reads and 150 for partial reads; notes up to 4,096 bytes each and 8,192 bytes per batch; a floor of 1,024 bytes per row during batch settlement.
+
+## Recovering spilled output
+
+- **MCP clients:** in `enforce` mode, call the added tool `spillway_read_artifact` with `{"sha256": "<64 hex>", "offset": 0, "limit": 8192}`. Each slice is UTF-8 safe, reports `next_offset` and `eof`, and is neutralized like any other tool output. Slices are requested at up to half the cap and shrunk further if needed, so the response always fits.
+- **Hermes:** the header gives the absolute path, e.g. `artifact path=~/.hermes/spillway/artifacts/<sha256>.txt`. Read it with the agent's normal `read_file` offset/limit.
+- **Housekeeping:** `spillway prune --log-dir DIR [--max-artifacts N] [--max-bytes B]` applies the retention limits. Writes also prune automatically.
+
+## Receipts and `spillway stats`
+
+Each tool result writes one JSON line to `receipts.jsonl`. It contains no output content: sizes, SHA-256 hashes, mode, exit code, error locations, note IDs, `verified`, `would_change` and `elapsed_us`.
 
 ```sh
-python3 - ~/.hermes/context-budget-guard/receipts.jsonl <<'PY'
-import json, statistics, sys
-r = [json.loads(l) for l in open(sys.argv[1]) if l.strip() and '"mode"' in l]
-cut = [x for x in r if x.get("would_change")]
-lat = sorted(x["elapsed_us"] for x in r if "elapsed_us" in x)
-print("results", len(r), "would exceed cap", len(cut))
-print("bytes before", sum(x["original_bytes"] for x in r), "after", sum(x["rendered_bytes"] for x in r))
-print("not verified", sum(1 for x in r if not x.get("verified") or x["mode"] == "failclosed"))
-if lat:
-    print("latency us p50", statistics.median(lat), "p95", lat[int(len(lat) * 0.95)], "max", lat[-1])
-PY
+spillway stats                       # default: $SPILLWAY_LOG_DIR/receipts.jsonl or ~/.cache/spillway/receipts.jsonl
+spillway stats ~/.hermes/spillway/receipts.jsonl --json
 ```
 
-Reproduce the offline replay (0 model calls):
+```text
+results: 412  would_change: 37  not_verified: 0
+bytes:   before=3120044  after=1048213  modes={'full': 375, 'preview': 37}
+latency: n=412  p50=180us  p95=950us  max=4100us
+```
+
+(Illustrative output. Run `shadow` for a while and read your own numbers before you consider `enforce`.)
+
+The field reference is in [docs/design.md](docs/design.md#receipt-fields).
+
+## How it works
+
+![Tool data passes through per-result and aggregate budgeting into a model-visible preview; additional detail goes to a private artifact; notes stay outside the untrusted wrapper exactly once.](docs/assets/output-flow.svg)
+
+1. **Render and measure exactly.** The final model-visible representation is what gets measured: framing, multimodal JSON escaping and note suffixes included. Measurement is never an estimate.
+2. **Extract facts from the full output.** The exit code, `file:line` locations (Python, TypeScript/MSBuild, GCC, Rust, ESLint, SQL, Make and others, including inside JSON-escaped strings) and fallback error clues.
+3. **Cut per result.** If the rendered result exceeds the cap or its line limit, Spillway builds a header, a head and a tail on UTF-8 and line boundaries, then re-measures until it fits. If no preview fits, it uses a header-only marker.
+4. **Settle the batch.** If a turn budget is exceeded, control rows and approved-read receipts stay fixed. The rest are water-filled: small rows keep their size and the largest rows shrink first. A policy failure withholds bodies but keeps the notes each call owns. Tools are never re-run.
+5. **Verify independently.** [`verify.py`](spillway/verify.py) does not import the budgeting code. It re-parses the final output and checks the byte cap, receipt hash, a single genuine wrapper, the exit code, the locations, and that each note appears exactly once outside the wrapper. Any mismatch replaces the output with a bounded fail-closed marker.
+6. **Track note ownership.** Plugin and LSP notes belong to a call ID and move through `PENDING → DELIVERED → RETIRED`, with bounded state. See [docs/model/notes.md](docs/model/notes.md); 10,000 random sequences are property-tested.
+
+The full design and its invariants are in [docs/design.md](docs/design.md).
+
+## Evidence
+
+Offline replay: 12 synthetic cases, 0 model calls and no network. Each arm is scored by ground-truth oracles that are independent of Spillway's verifier. It is reproducible byte for byte and runs in CI.
+
+| Arm | Model-visible bytes | Oracles passed | Typical failures |
+| --- | ---: | ---: | --- |
+| `none` (no budget) | 297,924 | 46 / 62 | over the cap, aggregate over budget, forged/duplicate wrapper |
+| `historical` (emulated character-based spill) | 163,871 | 43 / 62 | lost exit codes and locations, dropped notes |
+| `candidate` (Spillway) | 146,175 | **62 / 62** | — |
 
 ```sh
 python3 benchmarks/replay/replay.py --out /tmp/offline-replay.json
 cmp /tmp/offline-replay.json benchmarks/replay/results/offline-replay.json && echo identical
 ```
 
-The command exits with 1 if the candidate arm fails any oracle. `cmp` should stay silent and the line should print `identical`; CI does the same.
+**What this does not show:** token or cost savings on real tasks, or task success rates. The `historical` arm is an emulation, not the old runtime. A real-task A/B benchmark (shadow first, then paired enforce runs) is the next gate; see [docs/benchmarking.md](docs/benchmarking.md).
 
-## Try the toolkit
+## Security and privacy
 
-Python 3.11+, no dependency installation, credentials or live profile required:
+> In `enforce` mode, `artifacts/<sha256>.txt` holds the **complete, unredacted** output of every cut result. That can include secrets read by the agent (`.env` files, tokens), PII and private code. Spillway redacts nothing.
 
-```sh
-python3 -m unittest discover -s tests -v
-python3 scripts/check_repo.py
-python3 scripts/validate_benchmark.py benchmarks/results/2026-11-02-off-baseline.json
-```
+- Directories are created 0700 and files 0600. Writes and reads use `O_NOFOLLOW`; symlinks and non-regular files are refused, and artifact names must be valid SHA-256 hex. None of this protects against other processes running as the same UID.
+- Retention is bounded (200 files / 100 MiB by default). Never point `SPILLWAY_LOG_DIR` inside a repository, and never commit or share `artifacts/` or `*.jsonl`.
+- In `shadow` no artifacts are written. Receipts contain no output content, but they do contain tool names and `file:line` locations.
+- Both adapters **fail open** on internal errors: the original result goes through, and Hermes logs the exception type name to `errors.jsonl`. The verifier **fails closed** on a receipt mismatch.
+- `install.sh` refuses any destination that does not end in `/plugins/spillway` before it runs `rm -rf`.
 
-These check the **public tooling**, not the separate runtime. To create synthetic fixtures, choose a new output directory:
+Report vulnerabilities privately: [SECURITY.md](SECURITY.md).
 
-```sh
-python3 scripts/generate_fixtures.py --output benchmark-fixtures
-```
+## Project layout
 
-The generator refuses existing paths. Generating fixtures does not run a model, recreate measured timing, or complete the proposed multi-codebase benchmark.
-
-## Go deeper
-
-| Start here | What you get |
+| Path | Contents |
 | --- | --- |
-| [Operating skill](SKILL.md) | Repeatable evidence and review procedure |
-| [Design](docs/design.md) | Invariants, exceptions and protected-note contract |
-| [Project status](docs/project-status.md) | Stage 1 delivery, native fingerprints and remaining gates |
-| [Latest assessment / reviewer handoff](docs/reviews/2026-11-04-combined-assessment.md) | Scoped progress, combined failures, verifier findings and decisions for the next reviewer |
-| [Prior protected-note cycle](docs/reviews/2026-11-03-protected-notes.md) | Historical rejection and original defect evidence |
-| [Evaluation protocol](docs/multi-codebase-evaluation.md) | Proposed corpus, comparison arms, metrics and promotion gates |
-| [Rollout](docs/rollout.md) | Separate approval and rollback requirements |
-| [Governance](docs/repository-governance.md) | Required review and branch protections |
-| [Visual guide](docs/visual-guide.html) · [artwork sources](docs/assets/README.md) | Self-contained offline gallery and editable SVG/PNG graphics |
+| [`spillway/`](spillway/__init__.py) | Pure core (`limits`, `render`, `notes`, `sanitize`, `facts`, `budget`, `verify`), plus `artifacts` (I/O), `mcp_proxy` and `cli` |
+| [`adapters/hermes/`](adapters/hermes/README.md) | Hermes plugin (`spillway/__init__.py`, `plugin.yaml`) and `install.sh` |
+| [`adapters/mcp_proxy/`](adapters/mcp_proxy/README.md) | Source-checkout shim for `spillway mcp` |
+| [`benchmarks/replay/`](benchmarks/replay/README.md) | Offline three-arm replay, fixtures and committed results |
+| [`tests/`](tests/) | Unit, invariant, property, adapter and CLI tests (stdlib `unittest`) |
+| [`docs/`](docs/design.md) | Design, note model, benchmarking, rollout, status and historical reviews |
 
-Contributions are welcome, especially small adversarial reproductions. Start with [CONTRIBUTING.md](CONTRIBUTING.md). Keep sensitive reports private under [SECURITY.md](SECURITY.md), follow the [code of conduct](CODE_OF_CONDUCT.md), and preserve the existing [MIT license](LICENSE) attribution.
+## Development
+
+```sh
+python3 -m unittest discover -s tests -v       # 77 tests, about 10 s, includes 10,000 property sequences
+python3 scripts/check_repo.py                  # required files, local links, action pins, version consistency
+python3 benchmarks/replay/replay.py            # exits 1 if the candidate fails any oracle
+python3 benchmarks/replay/gen_fixtures.py      # regenerate replay fixtures (deterministic)
+```
+
+Standard library only, with no dev dependencies. CI runs all of the above, plus the test suite and a wheel-install smoke test on Python 3.11, 3.12 and 3.13, and also gitleaks and zizmor. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR. Model-visible contract changes need a regression test and a [CHANGELOG](CHANGELOG.md) entry.
+
+## Roadmap and status
+
+![Promotion roadmap from invariants through isolated build, repair, replay, real-task evaluation and controlled rollout.](docs/assets/roadmap.svg)
+
+- **Done:** the pure core, both adapters, offline replay, artifact recovery and packaging (v0.3.0 to v0.4.0).
+- **Next:** the real-task benchmark. Run in shadow, then paired A/B enforce runs comparing task success, tokens and cost, recovery reads and fidelity regressions. Protocol: [docs/multi-codebase-evaluation.md](docs/multi-codebase-evaluation.md).
+- **Separate track:** a private native Hermes patch whose combined acceptance gate is still **blocked**. Its history is kept in [docs/project-status.md](docs/project-status.md) and [docs/reviews/](docs/reviews/2026-11-04-combined-assessment.md), and none of it is shipped here.
+- **Production `enforce`:** gated by [docs/rollout.md](docs/rollout.md).
+
+The [operating skill](SKILL.md) describes how to review output-budget evidence. The [visual guide](docs/visual-guide.html) collects the diagrams.
+
+## Migrating from Context Budget Guard
+
+| Before (0.3.x) | Now (0.4.0) |
+| --- | --- |
+| `import cbg` | `import spillway` |
+| `[cbg preview] original N bytes, M linhas; …` | `[spillway preview] original N bytes, M lines; …` |
+| `CBG_MODE`, `CBG_LOG_DIR`, … | `SPILLWAY_MODE`, `SPILLWAY_LOG_DIR`, … (`CBG_*` still read as fallback) |
+| `~/.hermes/plugins/context-budget-guard` | `~/.hermes/plugins/spillway` |
+| `python3 adapters/mcp_proxy/proxy.py …` | `spillway mcp …` (the old path still works from a checkout) |
+
+The full list is in the [CHANGELOG](CHANGELOG.md#040--2026-11-18). The GitHub repository URL is unchanged for now.
+
+## License
+
+[MIT](LICENSE) © Ricardo Margalho. Contributions are welcome, especially small adversarial reproductions. Follow the [code of conduct](CODE_OF_CONDUCT.md).
