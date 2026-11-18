@@ -1,0 +1,6 @@
+name: spillway
+version: "0.4.0"
+description: "Verifiable fidelity-first budget for tool results (Spillway core). Default: shadow (measures and logs receipts; changes nothing)."
+author: "seatrunk"
+provides_hooks:
+  - transform_tool_result

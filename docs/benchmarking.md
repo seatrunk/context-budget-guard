@@ -2,7 +2,9 @@
 
 ## Proposed next evaluation
 
-Use the [multi-codebase evaluation protocol](multi-codebase-evaluation.md) for paired offline replay before any separately approved task-based model experiment. It defines workload families, required semantic facts, hard correctness vetoes, recovery overhead and reproducibility metadata. It does **not** supply a replay harness or new results. The current fixture generator and provider-baseline validator are not implementations of that proposal.
+Use the [multi-codebase evaluation protocol](multi-codebase-evaluation.md) for paired offline replay before any separately approved task-based model experiment. It defines workload families, required semantic facts, hard correctness vetoes, recovery overhead and reproducibility metadata.
+
+The offline part is implemented in [`benchmarks/replay/`](../benchmarks/replay/README.md): 12 synthetic cases, three arms, ground-truth oracles, 0 model calls. Current result (v0.4.0): candidate 62/62, unbudgeted 46/62, emulated historical spill 43/62; model-visible bytes 146,175 / 297,924 / 163,871. It measures fidelity and bytes only — not tokens, cost or task success. The real-task A/B benchmark (shadow receipts first, then paired enforce runs; summarize receipts with `spillway stats`) is still pending.
 
 The [November 3 cycle report](reviews/2026-11-03-protected-notes.md) records correctness evidence and a rejecting independent review, not compression savings. Keep those failures visible when characterizing a rejected candidate in isolation; benchmarks cannot override the [rollout gates](rollout.md).
 

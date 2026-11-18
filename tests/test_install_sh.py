@@ -1,10 +1,10 @@
-"""install.sh refuses dangerous destinations before rm -rf."""
+"""install.sh refuses dangerous destinations before any rm -rf."""
 import os
+from pathlib import Path
 import shutil
 import subprocess
 import tempfile
 import unittest
-from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "adapters/hermes/install.sh"
@@ -20,18 +20,22 @@ class InstallSh(unittest.TestCase):
     def test_rejects_root_and_arbitrary_dest_without_deleting(self):
         with tempfile.TemporaryDirectory() as tmp:
             victim = Path(tmp, "victim")
-            (victim / "vendor/cbg").mkdir(parents=True)
-            cases = {"/": "empty destination", "//": "empty destination", str(victim): "unexpected destination",
-                     str(victim) + "/": "unexpected destination",
-                     tmp + "/plugins/context-budget-guard-x": "unexpected destination"}
+            (victim / "vendor/spillway").mkdir(parents=True)
+            cases = {
+                "/": "empty destination",
+                "//": "empty destination",
+                str(victim): "unexpected destination",
+                str(victim) + "/": "unexpected destination",
+                tmp + "/plugins/spillway-extra": "unexpected destination",
+            }
             for dest, msg in cases.items():
-                r = self.run_sh(CBG_INSTALL_DEST=dest)
+                r = self.run_sh(SPILLWAY_INSTALL_DEST=dest)
                 self.assertEqual(r.returncode, 2, (dest, r.stderr))
                 self.assertIn(msg, r.stderr, dest)
-            self.assertTrue((victim / "vendor/cbg").is_dir())
+            self.assertTrue((victim / "vendor/spillway").is_dir())
 
     def test_empty_dest_after_normalization(self):
-        r = self.run_sh(CBG_INSTALL_DEST="///")
+        r = self.run_sh(SPILLWAY_INSTALL_DEST="///")
         self.assertEqual(r.returncode, 2)
         self.assertIn("empty destination", r.stderr)
 
@@ -39,9 +43,9 @@ class InstallSh(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             r = self.run_sh(HERMES_HOME=tmp + "/")
             self.assertEqual(r.returncode, 0, r.stderr)
-            dest = Path(tmp, "plugins/context-budget-guard")
+            dest = Path(tmp, "plugins/spillway")
             self.assertTrue((dest / "__init__.py").is_file())
-            self.assertTrue((dest / "vendor/cbg/budget.py").is_file())
+            self.assertTrue((dest / "vendor/spillway/budget.py").is_file())
             self.assertFalse(list(dest.rglob("__pycache__")))
             r2 = self.run_sh(HERMES_HOME=tmp)  # idempotent reinstall
             self.assertEqual(r2.returncode, 0, r2.stderr)

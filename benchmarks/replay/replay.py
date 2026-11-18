@@ -1,28 +1,30 @@
-"""OFFLINE replay (no model, no network) with three arms and fidelity oracles (issue #11).
+"""Offline replay (0 model calls, no network) with three arms and independent fidelity oracles.
 
-Arms over identical inputs:
-  none        no budget: full body + notes.
-  historical  historical spill: head-only preview by CHARACTERS up to the cap, note dropped when
-              the row is spilled, and spill of the largest row when the aggregate overflows.
-  candidate   cbg core (finalize_batch).
+Arms over identical synthetic inputs:
+  none        unbudgeted: full body + notes.
+  historical  emulated historical spill: character-based head preview up to cap, notes dropped on
+              spilled rows, and naive truncation of the largest row on aggregate overflow.
+  candidate   Spillway core (finalize_batch).
 
-Per-row oracles (independent of the core; they use the fixture's ground truth):
-  bytes<=cap, exit_code present, error location present, note present once outside the wrapper,
-  single wrapper, media preserved; and aggregate<=turn_budget per case.
+Per-row ground-truth oracles (independent of Spillway's verifier):
+  bytes_le_cap, single_wrapper, exit_code, location, note_once_outside, media_preserved, min_bytes;
+  plus aggregate_le_budget per case.
 
 Usage: python3 benchmarks/replay/replay.py [--out benchmarks/replay/results/offline-replay.json]
 """
 import argparse
 import hashlib
 import json
+from pathlib import Path
 import re
 import sys
-from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT))
-from cbg import NoteLedger, Policy, finalize_batch  # noqa: E402
-from cbg.render import render, rendered_bytes, split_result  # noqa: E402
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from spillway import NoteLedger, Policy, finalize_batch  # noqa: E402
+from spillway.render import render, rendered_bytes, split_result  # noqa: E402
 
 CAP = 16384
 FIXTURES = Path(__file__).with_name("fixtures")
@@ -33,7 +35,11 @@ def arm_none(case):
     out = []
     for row in case["rows"]:
         body, media, kind = split_result(row["result"])
-        notes = ["[note:%s] %s" % (n["note_id"], n["text"]) for n in case.get("notes", []) if n["owner"] == row["call_id"]]
+        notes = [
+            "[note:%s] %s" % (n["note_id"], n["text"])
+            for n in case.get("notes", [])
+            if n["owner"] == row["call_id"]
+        ]
         out.append(render(body, kind, notes, media))
     return out
 
@@ -45,17 +51,30 @@ def arm_historical(case):
         body, media, kind = split_result(row["result"])
         spilled = len(body) > CAP
         if spilled:
-            body = body[:CAP - 200] + "\n[output truncated; full output saved]"
+            body = body[: CAP - 200] + "\n[output truncated; full output saved]"
         bodies.append([body, media, kind, spilled, row["call_id"]])
+
     def total():
         return sum(len(b[0]) for b in bodies)
+
     if budget is not None and total() > budget:
         largest = max(bodies, key=lambda b: len(b[0]))
-        largest[0] = largest[0][:max(0, len(largest[0]) - (total() - budget))] + "\n[aggregate budget: truncated]"
+        largest[0] = (
+            largest[0][: max(0, len(largest[0]) - (total() - budget))]
+            + "\n[aggregate budget: truncated]"
+        )
         largest[3] = True
     out = []
     for body, media, kind, spilled, cid in bodies:
-        notes = [] if spilled else ["[note:%s] %s" % (n["note_id"], n["text"]) for n in case.get("notes", []) if n["owner"] == cid]
+        notes = (
+            []
+            if spilled
+            else [
+                "[note:%s] %s" % (n["note_id"], n["text"])
+                for n in case.get("notes", [])
+                if n["owner"] == cid
+            ]
+        )
         out.append(render(body, kind, notes, media))
     return out
 
@@ -64,8 +83,12 @@ def arm_candidate(case):
     ledger = NoteLedger("replay")
     for n in case.get("notes", []):
         ledger.queue(n["note_id"], n["owner"], n["text"])
-    outs = finalize_batch([dict(r) for r in case["rows"]], ledger=ledger, policy=Policy(result_cap=CAP),
-                          turn_budget=case.get("turn_budget"))
+    outs = finalize_batch(
+        [dict(r) for r in case["rows"]],
+        ledger=ledger,
+        policy=Policy(result_cap=CAP),
+        turn_budget=case.get("turn_budget"),
+    )
     return [o.rendered for o in outs]
 
 
@@ -74,20 +97,36 @@ def oracles(case, rendered):
     for row, r in zip(case["rows"], rendered):
         exp = case["expect"].get(row["call_id"], {})
         text = r.model_text()
-        outside = text.rsplit(CLOSE, 1)[-1] if r.kind == "text" else \
-            "\n".join(p.get("text", "") for p in r.payload[1:] if p.get("type") == "text")
-        o = {"bytes_le_cap": rendered_bytes(r) <= CAP, "single_wrapper": text.count(OPEN) == 1 and text.count(CLOSE) == 1}
+        outside = (
+            text.rsplit(CLOSE, 1)[-1]
+            if r.kind == "text"
+            else "\n".join(p.get("text", "") for p in r.payload[1:] if p.get("type") == "text")
+        )
+        size = rendered_bytes(r)
+        o = {
+            "bytes_le_cap": size <= CAP,
+            "single_wrapper": text.count(OPEN) == 1 and text.count(CLOSE) == 1,
+        }
         if "exit_code" in exp:
-            o["exit_code"] = bool(re.search(r"exit[_ ]?code\"?\s*[:=]\s*%d\b" % exp["exit_code"], text))
+            o["exit_code"] = bool(re.search(r'exit[_ ]?code(?:\\"|")?\s*[:=]\s*%d\b' % exp["exit_code"], text))
         for loc in exp.get("locations", []):
-            o["location"] = o.get("location", True) and (loc in text or loc.replace(":", "(", 1) in text
-                                                       or ('"%s", line %s' % tuple(loc.rsplit(":", 1))) in text)
+            file_part, line_part = loc.rsplit(":", 1)
+            o["location"] = o.get("location", True) and (
+                loc in text
+                or loc.replace(":", "(", 1) in text
+                or ('"%s", line %s' % (file_part, line_part)) in text
+                or ('\\"%s\\", line %s' % (file_part, line_part)) in text
+            )
         for nid in exp.get("notes", []):
             tag = "[note:%s]" % nid
-            o["note_once_outside"] = o.get("note_once_outside", True) and text.count(tag) == 1 and tag in outside
+            o["note_once_outside"] = (
+                o.get("note_once_outside", True) and text.count(tag) == 1 and tag in outside
+            )
         if "media" in exp:
             o["media_preserved"] = r.kind == "multimodal" and len(r.media) == exp["media"]
-        res.append({"call_id": row["call_id"], "bytes": rendered_bytes(r), "oracles": o})
+        if "min_bytes" in exp:
+            o["min_bytes"] = size >= exp["min_bytes"]
+        res.append({"call_id": row["call_id"], "bytes": size, "oracles": o})
     agg = sum(x["bytes"] for x in res)
     case_ok = {"aggregate_le_budget": agg <= case["turn_budget"]} if case.get("turn_budget") else {}
     return res, agg, case_ok
@@ -98,8 +137,15 @@ def main(argv=None):
     ap.add_argument("--out", default=str(Path(__file__).with_name("results") / "offline-replay.json"))
     args = ap.parse_args(argv)
     arms = {"none": arm_none, "historical": arm_historical, "candidate": arm_candidate}
-    report = {"schema": "cbg-offline-replay/1", "synthetic": True, "model_calls": 0, "cap_bytes": CAP,
-              "fixtures": {}, "cases": [], "arms": {}}
+    report = {
+        "schema": "spillway-offline-replay/2",
+        "synthetic": True,
+        "model_calls": 0,
+        "cap_bytes": CAP,
+        "fixtures": {},
+        "cases": [],
+        "arms": {},
+    }
     files = sorted(FIXTURES.glob("*.json"))
     for path in files:
         report["fixtures"][path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -113,18 +159,31 @@ def main(argv=None):
             entry["arms"][name] = {"aggregate_bytes": agg, "rows": rows, **case_ok}
             a = report["arms"][name]
             a["bytes_total"] += agg
-            checks = [(r["call_id"] + ":" + k, v) for r in rows for k, v in r["oracles"].items()] + list(case_ok.items())
+            checks = [
+                (r["call_id"] + ":" + k, v) for r in rows for k, v in r["oracles"].items()
+            ] + list(case_ok.items())
             a["oracle_checks"] += len(checks)
             a["oracle_pass"] += sum(1 for _, v in checks if v)
             a["failures"] += [case["case"] + "/" + k for k, v in checks if not v]
         report["cases"].append(entry)
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-    Path(args.out).write_text(json.dumps(report, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
-    print("cbg offline replay: %d synthetic cases, 0 model calls, cap %d bytes" % (len(files), CAP))
+    Path(args.out).write_text(
+        json.dumps(report, ensure_ascii=False, indent=1, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print("spillway offline replay: %d synthetic cases, 0 model calls, cap %d bytes" % (len(files), CAP))
     print("%-11s %12s %10s  failures" % ("arm", "bytes", "oracles"))
     for name, a in report["arms"].items():
-        print("%-11s %12d %5d/%-4d  %s" % (name, a["bytes_total"], a["oracle_pass"], a["oracle_checks"],
-                                          ", ".join(a["failures"]) or "-"))
+        print(
+            "%-11s %12d %5d/%-4d  %s"
+            % (
+                name,
+                a["bytes_total"],
+                a["oracle_pass"],
+                a["oracle_checks"],
+                ", ".join(a["failures"]) or "-",
+            )
+        )
     cand = report["arms"]["candidate"]
     return 0 if cand["oracle_pass"] == cand["oracle_checks"] else 1
 

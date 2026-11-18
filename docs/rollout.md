@@ -1,11 +1,11 @@
 # Rollout gates
 
-Production activation is currently **BLOCKED**. Since PR #14 this repository ships the `cbg/` core plus a Hermes plugin and an MCP proxy that default to `shadow` (receipts only, output unchanged). Installing them in shadow mode is observation, not activation. Their `enforce` mode and the private native patch both stay behind the gates below.
+Production activation is currently **BLOCKED**. Since PR #14 this repository ships the core (now the `spillway` package, v0.4.0) plus a Hermes plugin and an MCP proxy that default to `shadow` (receipts only, output unchanged). Installing them in shadow mode is observation, not activation. Their `enforce` mode and the private native patch both stay behind the gates below.
 
 Before any `enforce` trial or native runtime trial:
 
 - Run the real-task benchmark from the README: shadow receipts first, then paired A/B enforce runs, with no fidelity-oracle regressions.
-- Pass the Stage 2 native combined gate on the exact native candidate, then independent review. Stage 1 core tests and the offline replay (candidate 39/39) do not replace it.
+- Pass the Stage 2 native combined gate on the exact native candidate, then independent review. Core tests and the offline replay (candidate 62/62 in v0.4.0) do not replace it.
 
 - Resolve the missing short plugin/LSP note after aggregate spill. Add a synthetic regression and inspect model-visible output.
 - Resolve the latest [combined assessment blockers](reviews/2026-11-04-combined-assessment.md): rotated-session re-budgeting, exact ownership of withheld notice presentations, and repeated settlement while dependencies remain failed. Individual #6–#9 approvals do not establish compatibility.

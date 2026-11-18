@@ -2,6 +2,9 @@ __pycache__/
 *.py[cod]
 .venv/
 .pytest_cache/
+build/
+dist/
+*.egg-info/
 .env
 .env.*
 /config.yaml
@@ -14,6 +17,6 @@ benchmark-fixtures/
 .benchmark-runs/
 .DS_Store
 
-# Saída do context-budget-guard (pode conter dados sensíveis)
+# Spillway runtime output (may contain unredacted tool artifacts)
 artifacts/
 context-budget-guard/

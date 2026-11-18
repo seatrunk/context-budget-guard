@@ -1,6 +1,6 @@
-# Note ownership model (Stage 1)
+# Note ownership model
 
-Implementation: [`cbg/notes.py`](../../cbg/notes.py). Property test: [`tests/invariants/test_notes_model.py`](../../tests/invariants/test_notes_model.py) (10,000 sequences, fixed seed).
+Implementation: [`spillway/notes.py`](../../spillway/notes.py). Property test: [`tests/invariants/test_notes_model.py`](../../tests/invariants/test_notes_model.py) (10,000 sequences, fixed seed).
 
 ## States and events
 
@@ -19,7 +19,7 @@ Implementation: [`cbg/notes.py`](../../cbg/notes.py). Property test: [`tests/inv
 - N2: the sha256 recorded on the owner is that of the final delivered render, including marker or withheld (B2).
 - N3: a policy or aggregate failure in the second settlement does not lose a delivered note (B3, #4).
 - N4: session rotation does not remove a PENDING note from eligibility, and the note is included in the cap measurement (B1).
-- N5: bounded state: `state_size() <= pending + retired_cap` (#9).
+- N5: bounded state (#9): `state_size() <= pending_cap + delivered + retired_cap`. DELIVERED notes retire at `complete_batch`; the RETIRED history is a `retired_cap` ring (default 64); orphaned PENDING notes whose call never settles are evicted oldest-first beyond `pending_cap` (default 256) and counted in `evicted_pending`.
 - Cap: every non-control row has `rendered_bytes <= cap`, measured on the final render (F1/B1/#6).
 
 ## Assumption and limit

@@ -1,21 +1,22 @@
 {
  "arms": {
   "candidate": {
-   "bytes_total": 113707,
+   "bytes_total": 146175,
    "failures": [],
-   "oracle_checks": 39,
-   "oracle_pass": 39
+   "oracle_checks": 62,
+   "oracle_pass": 62
   },
   "historical": {
-   "bytes_total": 131532,
+   "bytes_total": 163871,
    "failures": [
     "issue1_aggregate_spill_note/a-1:note_once_outside",
     "issue1_aggregate_spill_note/aggregate_le_budget",
     "issue6_multimodal_escaped/m-1:bytes_le_cap",
-    "issue6_multimodal_escaped/m-1:exit_code",
     "issue6_multimodal_escaped/m-1:note_once_outside",
     "issue8_delimiter_note/d-1:single_wrapper",
     "issue8_delimiter_note/d-1:note_once_outside",
+    "json_escaped_traceback/jtb-1:exit_code",
+    "json_escaped_traceback/jtb-1:location",
     "python_traceback/py-1:exit_code",
     "python_traceback/py-1:location",
     "rust_cargo_mid/rs-1:exit_code",
@@ -24,19 +25,21 @@
     "sql_migration_log/sql-1:location",
     "typescript_tsc/ts-1:exit_code",
     "utf8_multibyte/u-1:bytes_le_cap",
-    "utf8_multibyte/u-1:location"
+    "utf8_multibyte/u-1:location",
+    "waterfill_mixed_batch/wf-big:exit_code",
+    "waterfill_mixed_batch/aggregate_le_budget"
    ],
-   "oracle_checks": 39,
-   "oracle_pass": 23
+   "oracle_checks": 62,
+   "oracle_pass": 43
   },
   "none": {
-   "bytes_total": 244472,
+   "bytes_total": 297924,
    "failures": [
     "issue1_aggregate_spill_note/aggregate_le_budget",
     "issue6_multimodal_escaped/m-1:bytes_le_cap",
-    "issue6_multimodal_escaped/m-1:exit_code",
     "issue8_delimiter_note/d-1:single_wrapper",
     "issue8_delimiter_note/d-1:note_once_outside",
+    "json_escaped_traceback/jtb-1:bytes_le_cap",
     "python_traceback/py-1:bytes_le_cap",
     "python_traceback/py-1:exit_code",
     "rust_cargo_mid/rs-1:bytes_le_cap",
@@ -45,10 +48,12 @@
     "sql_migration_log/sql-1:exit_code",
     "typescript_tsc/ts-1:bytes_le_cap",
     "typescript_tsc/ts-1:exit_code",
-    "utf8_multibyte/u-1:bytes_le_cap"
+    "utf8_multibyte/u-1:bytes_le_cap",
+    "waterfill_mixed_batch/wf-big:exit_code",
+    "waterfill_mixed_batch/aggregate_le_budget"
    ],
-   "oracle_checks": 39,
-   "oracle_pass": 25
+   "oracle_checks": 62,
+   "oracle_pass": 46
   }
  },
  "cap_bytes": 16384,
@@ -102,11 +107,11 @@
      ]
     },
     "none": {
-     "aggregate_bytes": 17159,
+     "aggregate_bytes": 17164,
      "aggregate_le_budget": false,
      "rows": [
       {
-       "bytes": 9110,
+       "bytes": 9115,
        "call_id": "a-1",
        "oracles": {
         "bytes_le_cap": true,
@@ -131,11 +136,11 @@
   {
    "arms": {
     "candidate": {
-     "aggregate_bytes": 16232,
+     "aggregate_bytes": 16384,
      "aggregate_le_budget": true,
      "rows": [
       {
-       "bytes": 16232,
+       "bytes": 16384,
        "call_id": "m-1",
        "oracles": {
         "bytes_le_cap": true,
@@ -156,7 +161,7 @@
        "call_id": "m-1",
        "oracles": {
         "bytes_le_cap": false,
-        "exit_code": false,
+        "exit_code": true,
         "media_preserved": true,
         "note_once_outside": false,
         "single_wrapper": true
@@ -165,15 +170,15 @@
      ]
     },
     "none": {
-     "aggregate_bytes": 30627,
+     "aggregate_bytes": 30632,
      "aggregate_le_budget": true,
      "rows": [
       {
-       "bytes": 30627,
+       "bytes": 30632,
        "call_id": "m-1",
        "oracles": {
         "bytes_le_cap": false,
-        "exit_code": false,
+        "exit_code": true,
         "media_preserved": true,
         "note_once_outside": true,
         "single_wrapper": true
@@ -188,10 +193,10 @@
   {
    "arms": {
     "candidate": {
-     "aggregate_bytes": 123,
+     "aggregate_bytes": 128,
      "rows": [
       {
-       "bytes": 123,
+       "bytes": 128,
        "call_id": "d-1",
        "oracles": {
         "bytes_le_cap": true,
@@ -202,10 +207,10 @@
      ]
     },
     "historical": {
-     "aggregate_bytes": 120,
+     "aggregate_bytes": 125,
      "rows": [
       {
-       "bytes": 120,
+       "bytes": 125,
        "call_id": "d-1",
        "oracles": {
         "bytes_le_cap": true,
@@ -216,10 +221,10 @@
      ]
     },
     "none": {
-     "aggregate_bytes": 120,
+     "aggregate_bytes": 125,
      "rows": [
       {
-       "bytes": 120,
+       "bytes": 125,
        "call_id": "d-1",
        "oracles": {
         "bytes_le_cap": true,
@@ -240,6 +245,57 @@
      "rows": [
       {
        "bytes": 16384,
+       "call_id": "jtb-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "exit_code": true,
+        "location": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "historical": {
+     "aggregate_bytes": 16271,
+     "rows": [
+      {
+       "bytes": 16271,
+       "call_id": "jtb-1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "exit_code": false,
+        "location": false,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "none": {
+     "aggregate_bytes": 37372,
+     "rows": [
+      {
+       "bytes": 37372,
+       "call_id": "jtb-1",
+       "oracles": {
+        "bytes_le_cap": false,
+        "exit_code": true,
+        "location": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    }
+   },
+   "case": "json_escaped_traceback",
+   "language": "python"
+  },
+  {
+   "arms": {
+    "candidate": {
+     "aggregate_bytes": 16342,
+     "rows": [
+      {
+       "bytes": 16342,
        "call_id": "py-1",
        "oracles": {
         "bytes_le_cap": true,
@@ -287,10 +343,10 @@
   {
    "arms": {
     "candidate": {
-     "aggregate_bytes": 3309,
+     "aggregate_bytes": 3361,
      "rows": [
       {
-       "bytes": 3309,
+       "bytes": 3361,
        "call_id": "r-1",
        "oracles": {
         "bytes_le_cap": true,
@@ -332,10 +388,10 @@
   {
    "arms": {
     "candidate": {
-     "aggregate_bytes": 16384,
+     "aggregate_bytes": 16367,
      "rows": [
       {
-       "bytes": 16384,
+       "bytes": 16367,
        "call_id": "rs-1",
        "oracles": {
         "bytes_le_cap": true,
@@ -383,10 +439,10 @@
   {
    "arms": {
     "candidate": {
-     "aggregate_bytes": 124,
+     "aggregate_bytes": 129,
      "rows": [
       {
-       "bytes": 124,
+       "bytes": 129,
        "call_id": "s-1",
        "oracles": {
         "bytes_le_cap": true,
@@ -397,10 +453,10 @@
      ]
     },
     "historical": {
-     "aggregate_bytes": 124,
+     "aggregate_bytes": 129,
      "rows": [
       {
-       "bytes": 124,
+       "bytes": 129,
        "call_id": "s-1",
        "oracles": {
         "bytes_le_cap": true,
@@ -411,10 +467,10 @@
      ]
     },
     "none": {
-     "aggregate_bytes": 124,
+     "aggregate_bytes": 129,
      "rows": [
       {
-       "bytes": 124,
+       "bytes": 129,
        "call_id": "s-1",
        "oracles": {
         "bytes_le_cap": true,
@@ -431,10 +487,10 @@
   {
    "arms": {
     "candidate": {
-     "aggregate_bytes": 16384,
+     "aggregate_bytes": 16382,
      "rows": [
       {
-       "bytes": 16384,
+       "bytes": 16382,
        "call_id": "sql-1",
        "oracles": {
         "bytes_le_cap": true,
@@ -482,10 +538,10 @@
   {
    "arms": {
     "candidate": {
-     "aggregate_bytes": 16384,
+     "aggregate_bytes": 16316,
      "rows": [
       {
-       "bytes": 16384,
+       "bytes": 16316,
        "call_id": "ts-1",
        "oracles": {
         "bytes_le_cap": true,
@@ -561,10 +617,10 @@
      ]
     },
     "none": {
-     "aggregate_bytes": 60074,
+     "aggregate_bytes": 60076,
      "rows": [
       {
-       "bytes": 60074,
+       "bytes": 60076,
        "call_id": "u-1",
        "oracles": {
         "bytes_le_cap": false,
@@ -577,21 +633,227 @@
    },
    "case": "utf8_multibyte",
    "language": "text"
+  },
+  {
+   "arms": {
+    "candidate": {
+     "aggregate_bytes": 15999,
+     "aggregate_le_budget": true,
+     "rows": [
+      {
+       "bytes": 60,
+       "call_id": "wf-s0",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 60,
+       "call_id": "wf-s1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 60,
+       "call_id": "wf-s2",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 60,
+       "call_id": "wf-s3",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 60,
+       "call_id": "wf-s4",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 60,
+       "call_id": "wf-s5",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 15639,
+       "call_id": "wf-big",
+       "oracles": {
+        "bytes_le_cap": true,
+        "exit_code": true,
+        "location": true,
+        "min_bytes": true,
+        "note_once_outside": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "historical": {
+     "aggregate_bytes": 16058,
+     "aggregate_le_budget": false,
+     "rows": [
+      {
+       "bytes": 60,
+       "call_id": "wf-s0",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 60,
+       "call_id": "wf-s1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 60,
+       "call_id": "wf-s2",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 60,
+       "call_id": "wf-s3",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 60,
+       "call_id": "wf-s4",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 60,
+       "call_id": "wf-s5",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 15698,
+       "call_id": "wf-big",
+       "oracles": {
+        "bytes_le_cap": true,
+        "exit_code": false,
+        "location": true,
+        "min_bytes": true,
+        "note_once_outside": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    },
+    "none": {
+     "aggregate_bytes": 16058,
+     "aggregate_le_budget": false,
+     "rows": [
+      {
+       "bytes": 60,
+       "call_id": "wf-s0",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 60,
+       "call_id": "wf-s1",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 60,
+       "call_id": "wf-s2",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 60,
+       "call_id": "wf-s3",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 60,
+       "call_id": "wf-s4",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 60,
+       "call_id": "wf-s5",
+       "oracles": {
+        "bytes_le_cap": true,
+        "single_wrapper": true
+       }
+      },
+      {
+       "bytes": 15698,
+       "call_id": "wf-big",
+       "oracles": {
+        "bytes_le_cap": true,
+        "exit_code": false,
+        "location": true,
+        "min_bytes": true,
+        "note_once_outside": true,
+        "single_wrapper": true
+       }
+      }
+     ]
+    }
+   },
+   "case": "waterfill_mixed_batch",
+   "language": "rust"
   }
  ],
  "fixtures": {
   "issue1_aggregate_spill_note.json": "a420313a02ad97ffc2173c1308dca3c4d784bc646c36919c5ee2b07d972211d3",
   "issue6_multimodal_escaped.json": "6bfe20132f34e9b96aaa91e4d0321fd543b9265597d8e476d967ee7e4dd86c73",
   "issue8_delimiter_note.json": "620a966f114f955bd2cbb59cd5116838e61e7bfdf20f760dc149dbe51efb3a32",
+  "json_escaped_traceback.json": "23c08e255a69d30c9c7789fb2cc06e1909a4594e28eaf7e2d8c43c6d944dcb9b",
   "python_traceback.json": "bec15cd2184fe60e5a99ddda4e3303972eddd93f5c79a48a8ad0606053044c77",
   "read_351_lines.json": "6d6eb24cb429ffdbb758a8c0a0d453fedcc3d083821c44480710a57852610384",
   "rust_cargo_mid.json": "b08f53c52463dfb1c0e0c3b32d5499e2ccbfa091a42f6802741add4b664c3cd0",
   "small_with_note.json": "59554461eddf3afbd2d0bf386c98df119226b518a39db991c6a27846b05833bb",
   "sql_migration_log.json": "39a080019849d9c35f5ccfc795c1691bd73728979c600dfb5d19d2ff3542cf65",
   "typescript_tsc.json": "c84c40340190db06e329b22c735290d927546300e14104a76af8108f6b4bc5f0",
-  "utf8_multibyte.json": "9b835fbc3cb9564ee8b155b17d6737623ad0c37718887c2b5637f238a01ad4e4"
+  "utf8_multibyte.json": "ca349902df4d8da0bc96be8ee7431d83924c2cb07e9e2e65a5e4c3b200effac5",
+  "waterfill_mixed_batch.json": "72025c23a65361f7cac5c0bd47e1f0fa86a5b0f76bc0402d1741d33dc77152b9"
  },
  "model_calls": 0,
- "schema": "cbg-offline-replay/1",
+ "schema": "spillway-offline-replay/2",
  "synthetic": true
 }

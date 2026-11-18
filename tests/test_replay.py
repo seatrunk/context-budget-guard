@@ -1,9 +1,9 @@
-"""Permanent tests for the offline replay harness (#11)."""
+"""Permanent tests for the deterministic offline replay harness (#11)."""
 import json
+from pathlib import Path
 import sys
 import tempfile
 import unittest
-from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "benchmarks/replay"))
@@ -19,7 +19,9 @@ class Replay(unittest.TestCase):
             arms = report["arms"]
             self.assertEqual(report["model_calls"], 0)
             self.assertEqual(arms["candidate"]["failures"], [])
+            self.assertEqual(arms["candidate"]["oracle_pass"], arms["candidate"]["oracle_checks"])
             self.assertIn("issue1_aggregate_spill_note/a-1:note_once_outside", arms["historical"]["failures"])
+            self.assertIn("json_escaped_traceback/jtb-1:location", arms["historical"]["failures"])
             self.assertIn("issue8_delimiter_note/d-1:single_wrapper", arms["none"]["failures"])
             self.assertLess(arms["candidate"]["bytes_total"], arms["none"]["bytes_total"])
 

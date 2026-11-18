@@ -1,13 +1,20 @@
 # Project status
 
-**November 4, 2026: Stage 1 delivered in PR #14 (core and adapters, shadow by default). Native runtime: combined acceptance BLOCKED, delivery support REJECTED. Production activation BLOCKED.**
+**November 18, 2026: v0.4.0 — renamed to Spillway; core, MCP proxy and Hermes plugin shipped, `shadow` by default. Native runtime: combined acceptance BLOCKED, delivery support REJECTED. Production `enforce` activation BLOCKED.**
 
-## Stage 1 (PR #14)
+## v0.4.0 (rename and review fixes)
 
-- `cbg/`: pure core with no I/O and no dependencies (limits, render, notes, sanitize, facts, budget, verify). It measures the final rendered bytes and emits a receipt that an independent verifier rechecks, failing closed.
+- Package `cbg` renamed to `spillway`; model-visible headers are English (`[spillway preview] …`); `SPILLWAY_*` variables with `CBG_*` fallbacks. See the [CHANGELOG](../CHANGELOG.md#040--2026-11-18) for the migration.
+- Fixed: equal-share batch crushing (now water-filling), receipt rows treated as flexible, 1/3 budget waste on line-limited reads, unrecoverable 16-char artifact pointer, JSON-escaped tracebacks, tiny MCP caps, a pagination stall in `utf8_slice`, and forgeable recovery slices.
+- Added: `pyproject.toml` and `spillway` CLI (`mcp`, `stats`, `prune`, `replay`), the MCP `spillway_read_artifact` recovery tool, `ArtifactStore` with bounded retention, diagnostic clues, line-aligned previews, bounded orphaned notes, CI Python 3.11–3.13 matrix with an install smoke test.
+- Offline replay: 12 synthetic cases, 62 oracle checks. Candidate 62/62; unbudgeted 46/62; emulated historical spill 43/62.
+
+## Stage 1 (PR #14, v0.3.0)
+
+- `cbg/` (now `spillway/`): pure core with no I/O and no dependencies (limits, render, notes, sanitize, facts, budget, verify). It measures the final rendered bytes and emits a receipt that an independent verifier rechecks, failing closed.
 - `adapters/hermes/`: user plugin on the public `transform_tool_result` hook. `adapters/mcp_proxy/`: MCP stdio proxy. Both default to `shadow`, which records receipts and changes nothing.
 - Tests: B1–B3 and the core parts of #1 and #3–#9, plus 10,000 random note-ownership sequences.
-- Offline replay (#11): 10 synthetic cases, 0 model calls. Candidate 39/39 oracles; unbudgeted 25/39; emulated historical spill 23/39.
+- Offline replay (#11) at the time: 10 synthetic cases, 0 model calls. Candidate 39/39 oracles; unbudgeted 25/39; emulated historical spill 23/39.
 
 Still pending:
 
